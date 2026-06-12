@@ -1,0 +1,6 @@
+{
+  "name": "SECUREFILL AI",
+  "description": "High-end, privacy-focused AI document vault and secure credential autofill assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
