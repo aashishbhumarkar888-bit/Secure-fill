@@ -18,3 +18,7 @@ View your app in AI Studio: https://ai.studio/apps/274747ff-05d8-44de-90b8-9cd9d
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Demo (no Web Store payment)
+
+To allow judges to test the extension without publishing to the Chrome Web Store, see `DEMO_INSTRUCTIONS.md` for steps to load the built extension locally using Chrome's "Load unpacked" developer feature.
