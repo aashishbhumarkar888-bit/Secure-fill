@@ -1318,10 +1318,8 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
       {/* SaaS Premium Navigation Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E5] px-6 h-16 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#222222] flex items-center justify-center text-white">
-            <span className="material-symbols-outlined select-none text-xl font-bold">
-              fingerprint
-            </span>
+          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-white shadow-xs">
+            <Fingerprint className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
             <span className="font-mono text-[9px] text-[#3B82F6] tracking-widest uppercase block font-semibold leading-none">
@@ -1506,48 +1504,148 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
 
       {/* Logged Out Splash Screen */}
       {!isLoggedIn && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#FFFFFF] relative">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="w-16 h-16 bg-[#FAFAFA] border border-[#E5E5E5] rounded-2xl flex items-center justify-center text-[#222222] mx-auto shadow-md">
-              <Lock className="w-8 h-8 text-[#222222]" />
+        <div className="flex-1 flex flex-col lg:flex-row bg-slate-50 relative min-h-[calc(100vh-64px)] overflow-hidden">
+          {/* Decorative Subtle Background Grid */}
+          <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
+          
+          {/* Left Column: Visual Mockup Showcase / Hero Panel */}
+          <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center border-r border-slate-200 bg-white/40 backdrop-blur-md relative z-10">
+            <div className="max-w-xl space-y-8">
+              
+              {/* Product Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-slate-100 rounded-full text-[10px] font-bold uppercase tracking-wider font-mono">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                SaaS Local Sandbox Verified
+              </div>
+
+              {/* Catchy headline */}
+              <div className="space-y-3">
+                <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                  One-Click Secure Mappings &amp; Identity Vault
+                </h2>
+                <p className="text-sm text-slate-600 leading-relaxed font-semibold">
+                  Classify offline certificates, auto-sync scholastic indices securely across hardware biometric devices, and auto-populate Google Forms without ever syncing secrets to public cloud servers.
+                </p>
+              </div>
+
+              {/* Highlight Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs hover:border-slate-300 transition-all flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <FolderLock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Military Vault (AES-255)</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Hardware isolated browser storage parameters.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs hover:border-slate-300 transition-all flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Puzzle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Cognitive Auto-Filler</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">AI-powered synonyms mapping table index.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs hover:border-slate-300 transition-all flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Compass className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Scholarship Engines</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Intelligent deadline chronology scheduler.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs hover:border-slate-300 transition-all flex gap-3 items-start">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Dynamic QR Exporter</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Temporary encrypted wireless share logs.</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Status footer with green pulsing circle */}
+              <div className="pt-4 border-t border-slate-200 flex items-center gap-2.5 text-[11px] text-slate-500 font-mono">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Active Vault Node Cryptographic Seal Verified • Local Session Secured</span>
+              </div>
+
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <h1 className="text-2xl font-black text-[#222222] tracking-tight">Access Locked</h1>
-              <p className="text-[#666666] text-sm">
-                Unlock SECUREFILL AI with Google Sign-In or local biometric scan. This is a secure sandboxed environment.
-              </p>
+          {/* Right Column: Google authenticating Card / Biometrics */}
+          <div className="flex-1 p-8 lg:p-12 flex items-center justify-center relative z-2" id="login-form-area-parent">
+            <div className="max-w-md w-full bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl space-y-6 relative hover:border-slate-300 transition-all">
+              
+              <div className="text-center space-y-2 mt-2">
+                <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-800 mx-auto shadow-xs">
+                  <Lock className="w-7 h-7 text-[#222222]" />
+                </div>
+                <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none mt-4">Access Session Locked</h1>
+                <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                  Authenticate your identity registers via secure Google accounts chooser or verified local biometric fingerprint scanning.
+                </p>
+              </div>
+
+              {/* SSL Parameters Log Checklist */}
+              <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl text-[10.5px] text-slate-500 space-y-2 font-mono leading-relaxed font-semibold">
+                <div className="flex justify-between">
+                  <span>🔒 Cryptographic Seal:</span>
+                  <span className="text-slate-700 font-bold">AES-GCM-256 Symmetric</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>🌐 Connection Status:</span>
+                  <span className="text-emerald-600 font-bold">SSL Verified SSL-3000</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>📅 Session Timestamp:</span>
+                  <span className="text-slate-700">{new Date().toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Google login triggers */}
+              <div className="space-y-2.5 pt-2">
+                <button
+                  type="button"
+                  id="google-signin-primary-btn"
+                  onClick={handleToggleLogin}
+                  className="w-full bg-[#1A73E8] hover:bg-[#1557b0] text-white py-3 rounded-xl text-xs font-bold tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Globe className="w-4 h-4 text-white" />
+                  Sign In with Google Account
+                </button>
+
+                <button
+                  type="button"
+                  id="biometrics-direct-scan-btn"
+                  onClick={() => {
+                    setBiometricPromptActive(true);
+                    setTimeout(() => {
+                      setBiometricPromptActive(false);
+                      setIsLoggedIn(true);
+                      logSystemActivity("Login", "Unlock completed with local fingerprints", "Success");
+                      showToast("Biometrics verified. Welcome to secure sandbox.");
+                    }, 1400);
+                  }}
+                  className="w-full bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 py-3 rounded-xl text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Fingerprint className="w-4 h-4 text-[#3B82F6]" />
+                  Scan Biometric thumb
+                </button>
+              </div>
             </div>
-
-            <div className="bg-[#FAFAFA] border border-[#E5E5E5] p-4 rounded-xl text-left text-xs text-[#666666] space-y-2 font-mono">
-              <p>🌐 Connection: Google OAuth 2.0 Client SSL Verification</p>
-              <p>🕒 Time: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
-              <p>🔐 Cryptographic Seal: AES-GCM-256 Symmetric Ledger</p>
-            </div>
-
-            <button
-              onClick={handleToggleLogin}
-              className="w-full bg-[#222222] hover:bg-[#333333] text-white py-3 rounded-xl text-xs font-bold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Globe className="w-4 h-4 text-white" />
-              Sign In with Google Account
-            </button>
-
-            <button
-              onClick={() => {
-                setBiometricPromptActive(true);
-                setTimeout(() => {
-                  setBiometricPromptActive(false);
-                  setIsLoggedIn(true);
-                  logSystemActivity("Login", "Unlock completed with local fingerprints", "Success");
-                  showToast("Biometrics verified. Welcome to secure sandbox.");
-                }, 1400);
-              }}
-              className="w-full bg-[#FAFAFA] hover:bg-[#F5F5F5] text-[#222222] border border-[#E5E5E5] py-3 rounded-xl text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Fingerprint className="w-4 h-4 text-[#3B82F6]" />
-              Scan Biometric thumb
-            </button>
           </div>
 
           {/* GOOGLE ACCOUNTS DIALOG POPUP */}
