@@ -137,6 +137,14 @@ export const ExtensionAPI = {
   async clearAllData(): Promise<void> {
     return StorageManager.clearAll();
   },
+  async isAutofillOnLoad(): Promise<boolean> {
+    // @ts-ignore
+    return StorageManager.isAutofillOnLoad();
+  },
+  async setAutofillOnLoad(enabled: boolean): Promise<void> {
+    // @ts-ignore
+    return StorageManager.setAutofillOnLoad(enabled);
+  },
 };
 
 // Make API available globally for the React app
@@ -153,7 +161,87 @@ window.securefillAPI = ExtensionAPI;
  */
 export async function initPopup(): Promise<void> {
   try {
-    // Profile will be loaded by the React app using the API
+    console.log('[SecureFill Popup] Initializing popup UI');
+
+    const statusEl = document.getElementById('sf-status') as HTMLDivElement;
+    const fullName = document.getElementById('sf-fullName') as HTMLInputElement;
+    const email = document.getElementById('sf-email') as HTMLInputElement;
+    const phone = document.getElementById('sf-phone') as HTMLInputElement;
+    const saveBtn = document.getElementById('sf-save') as HTMLButtonElement;
+    const autofillNow = document.getElementById('sf-autofillNow') as HTMLButtonElement;
+    const clearBtn = document.getElementById('sf-clear') as HTMLButtonElement;
+    const blockBtn = document.getElementById('sf-blockDomain') as HTMLButtonElement;
+    const autofillOnLoad = document.getElementById('sf-autofillOnLoad') as HTMLInputElement;
+
+    // Load existing profile
+    try {
+      const profile = await StorageManager.getUserProfile();
+      fullName.value = profile.fullName ?? '';
+      email.value = profile.email ?? '';
+      phone.value = profile.phone ?? '';
+    } catch (err) {
+      console.warn('[SecureFill Popup] No existing profile', err);
+    }
+
+    // Load autofill-on-load flag
+    try {
+      // @ts-ignore
+      const onLoad = await StorageManager.isAutofillOnLoad();
+      autofillOnLoad.checked = !!onLoad;
+    } catch {}
+
+    saveBtn.addEventListener('click', async () => {
+      const profile: UserProfile = {
+        fullName: fullName.value,
+        email: email.value,
+        phone: phone.value,
+      } as unknown as UserProfile;
+
+      try {
+        await StorageManager.saveUserProfile(profile);
+        statusEl.textContent = 'Profile saved.';
+      } catch (err) {
+        statusEl.textContent = 'Failed to save profile';
+      }
+    });
+
+    autofillNow.addEventListener('click', async () => {
+      statusEl.textContent = 'Sending autofill request...';
+      try {
+        chrome.runtime.sendMessage({ type: 'REQUEST_AUTOFILL' }, (resp) => {
+          if (chrome.runtime.lastError) {
+            statusEl.textContent = 'Autofill error';
+          } else {
+            statusEl.textContent = 'Autofill requested';
+          }
+        });
+      } catch (err) {
+        statusEl.textContent = 'Autofill failed';
+      }
+    });
+
+    clearBtn.addEventListener('click', async () => {
+      await StorageManager.clearAll();
+      statusEl.textContent = 'Cleared stored data';
+    });
+
+    blockBtn.addEventListener('click', async () => {
+      try {
+        const domain = new URL(window.location.href).hostname;
+        await StorageManager.addBlockedDomain(domain);
+        statusEl.textContent = `Blocked ${domain}`;
+      } catch (err) {
+        statusEl.textContent = 'Could not block domain';
+      }
+    });
+
+    autofillOnLoad.addEventListener('change', async () => {
+      const enabled = autofillOnLoad.checked;
+      // @ts-ignore
+      await StorageManager.setAutofillOnLoad(enabled);
+      statusEl.textContent = enabled ? 'Autofill on load enabled' : 'Autofill on load disabled';
+    });
+
     console.log('[SecureFill Popup] Initialized');
   } catch (error) {
     console.error('[SecureFill Popup] Initialization error:', error);

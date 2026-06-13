@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
   CONSENT_GIVEN: 'securefill_consent_given',
   BLOCKED_DOMAINS: 'securefill_blocked_domains',
   AUTOFILL_HISTORY: 'securefill_autofill_history',
+  AUTOFILL_ON_LOAD: 'securefill_autofill_on_load',
 } as const;
 
 export class StorageManager {
@@ -96,6 +97,32 @@ export class StorageManager {
     return new Promise((resolve) => {
       chrome.storage.local.get([STORAGE_KEYS.AUTOFILL_ENABLED], (result) => {
         resolve(result[STORAGE_KEYS.AUTOFILL_ENABLED] ?? true);
+      });
+    });
+  }
+
+  /**
+   * Get whether autofill-on-load is enabled (opt-in)
+   */
+  static async isAutofillOnLoad(): Promise<boolean> {
+    return new Promise((resolve) => {
+      chrome.storage.local.get([STORAGE_KEYS.AUTOFILL_ON_LOAD], (result) => {
+        resolve(result[STORAGE_KEYS.AUTOFILL_ON_LOAD] ?? false);
+      });
+    });
+  }
+
+  /**
+   * Set autofill-on-load flag
+   */
+  static async setAutofillOnLoad(enabled: boolean): Promise<void> {
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set({ [STORAGE_KEYS.AUTOFILL_ON_LOAD]: enabled }, () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        resolve();
       });
     });
   }

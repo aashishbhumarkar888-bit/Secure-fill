@@ -14,6 +14,7 @@ let formObserver: MutationObserver | null = null;
 let currentProfile: UserProfile | null = null;
 let autofillEnabled = true;
 let consentGiven = false;
+let autofillOnLoad = false;
 
 /**
  * Initialize content script
@@ -23,6 +24,7 @@ async function initContentScript(): Promise<void> {
     // Get user preferences
     autofillEnabled = await StorageManager.isAutofillEnabled();
     consentGiven = await StorageManager.hasConsentGiven();
+    autofillOnLoad = await StorageManager.isAutofillOnLoad();
 
     // Load user profile
     currentProfile = await StorageManager.getUserProfile();
@@ -37,8 +39,79 @@ async function initContentScript(): Promise<void> {
     });
 
     console.log('[SecureFill] Content script initialized');
+
+    // If autofill-on-load is enabled and user consent exists, attempt autofill automatically
+    try {
+      if (autofillOnLoad && autofillEnabled) {
+        // respect blocked domains
+        const blocked = await StorageManager.isDomainBlocked(window.location.href);
+        if (!blocked) {
+          if (!consentGiven) {
+            const userConsent = await requestUserConsent();
+            if (!userConsent) {
+              console.log('[SecureFill] Autofill-on-load cancelled by user');
+              return;
+            }
+            await StorageManager.setConsent(true);
+            consentGiven = true;
+          }
+
+          // Perform autofill (silent - minimal UI feedback)
+          await performAutofillOnLoad();
+        }
+      }
+    } catch (err) {
+      console.error('[SecureFill] Autofill-on-load error:', err);
+    }
   } catch (error) {
     console.error('[SecureFill] Error initializing content script:', error);
+  }
+}
+
+/**
+ * Perform autofill automatically when page loads (opt-in)
+ */
+async function performAutofillOnLoad(): Promise<void> {
+  try {
+    const forms = FormDetector.detectForms();
+    if (forms.length === 0) {
+      return;
+    }
+
+    currentProfile = currentProfile ?? (await StorageManager.getUserProfile());
+    if (!currentProfile) return;
+
+    let totalFieldsFilled = 0;
+
+    for (const form of forms) {
+      const formElement = document.getElementById(form.formId) ||
+        (form.formId.startsWith('form-') &&
+          document.querySelectorAll('form')[parseInt(form.formId.split('-')[1])] as HTMLFormElement | null);
+
+      if (!formElement || !(formElement instanceof HTMLFormElement)) {
+        continue;
+      }
+
+      const visibleFields = AutofillEngine.getVisibleFields(form.fields);
+      const fieldsToFill = visibleFields.filter((f) => !AutofillEngine.shouldSkipField(f));
+      const mappings = AutofillEngine.generateFieldMappings(fieldsToFill, currentProfile);
+
+      const results = AutofillEngine.fillForm(formElement, mappings, currentProfile);
+      const filledCount = results.filter((r) => r.success).length;
+      totalFieldsFilled += filledCount;
+
+      try {
+        const domain = new URL(window.location.href).hostname;
+        await StorageManager.logAutofillAction(domain, filledCount, true);
+      } catch {}
+    }
+
+    if (totalFieldsFilled > 0 && floatingButton) {
+      floatingButton.showSuccess();
+      floatingButton.showNotification(`Autofilled ${totalFieldsFilled} field${totalFieldsFilled !== 1 ? 's' : ''}`);
+    }
+  } catch (error) {
+    console.error('[SecureFill] performAutofillOnLoad error:', error);
   }
 }
 

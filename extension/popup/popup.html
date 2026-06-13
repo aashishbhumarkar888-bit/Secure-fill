@@ -62,9 +62,34 @@
 </head>
 <body>
   <div id="securefill-popup">
-    <div class="loading">
-      <div class="spinner"></div>
-      <span>Loading SecureFill...</span>
+    <div id="securefill-ui">
+      <h1 style="font-size:18px;margin:16px 12px;color:#111827">SecureFill AI</h1>
+      <div style="padding:0 12px 12px 12px;">
+        <label style="display:block;margin-bottom:6px;color:#374151;font-size:13px">Full name</label>
+        <input id="sf-fullName" type="text" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px" />
+
+        <label style="display:block;margin-bottom:6px;color:#374151;font-size:13px">Email</label>
+        <input id="sf-email" type="email" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px" />
+
+        <label style="display:block;margin-bottom:6px;color:#374151;font-size:13px">Phone</label>
+        <input id="sf-phone" type="tel" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:12px" />
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+          <input id="sf-autofillOnLoad" type="checkbox" />
+          <label for="sf-autofillOnLoad" style="color:#374151;font-size:13px">Autofill on page load (opt-in)</label>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button id="sf-save" style="flex:1;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white">Save Profile</button>
+          <button id="sf-autofillNow" style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:white;color:#374151">Autofill Page</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button id="sf-clear" style="flex:1;padding:8px;border-radius:8px;border:1px dashed #e5e7eb;background:white;color:#374151">Clear Data</button>
+          <button id="sf-blockDomain" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e5e7eb;background:white;color:#374151">Block Domain</button>
+        </div>
+        <div id="sf-status" style="margin-top:12px;color:#6b7280;font-size:13px"></div>
+      </div>
     </div>
   </div>
 
