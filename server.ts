@@ -357,11 +357,19 @@ app.get("/api/auth/me", (req, res) => {
   res.json({ user });
 });
 
+// Helper to check if the API key is a valid key and not a placeholder
+function isValidApiKey(key: string | undefined): boolean {
+  if (!key) return false;
+  const k = key.trim();
+  // Valid API key check: exclude placeholders or very short strings
+  return k.length > 15 && k !== "MY_GEMINI_API_KEY" && k !== "YOUR_API_KEY" && !k.startsWith("MY_");
+}
+
 // Initialize server-side Gemini client lazily
 let ai: GoogleGenAI | null = null;
 const API_KEY = process.env.GEMINI_API_KEY;
 
-if (API_KEY) {
+if (isValidApiKey(API_KEY)) {
   try {
     ai = new GoogleGenAI({
       apiKey: API_KEY,
@@ -376,12 +384,12 @@ if (API_KEY) {
     console.error("Failed to initialize Gemini API client:", error);
   }
 } else {
-  console.log("No GEMINI_API_KEY found. Running with high-fidelity local OCR metadata parser fallback.");
+  console.log("Running in local fallback mode (No valid environment default API key configured).");
 }
 
 app.post("/api/gemini/set-key", authenticateJwt, (req, res) => {
   const { apiKey } = req.body;
-  if (apiKey) {
+  if (isValidApiKey(apiKey)) {
     try {
       ai = new GoogleGenAI({
         apiKey: apiKey,
@@ -398,7 +406,7 @@ app.post("/api/gemini/set-key", authenticateJwt, (req, res) => {
     }
   } else {
     const envKey = process.env.GEMINI_API_KEY;
-    if (envKey) {
+    if (isValidApiKey(envKey)) {
       ai = new GoogleGenAI({
         apiKey: envKey,
         httpOptions: {
@@ -407,8 +415,10 @@ app.post("/api/gemini/set-key", authenticateJwt, (req, res) => {
           }
         }
       });
+      console.log("Reset to default default key.");
     } else {
       ai = null;
+      console.log("Reset to no API key (running in local fallback mode).");
     }
     return res.json({ success: true, message: "Reset to environment default key." });
   }
