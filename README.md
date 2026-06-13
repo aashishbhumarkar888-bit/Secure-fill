@@ -1,7 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 # Secure-Fill 🚀
 
 > An AI-powered digital document management and opportunity discovery platform designed to simplify document organization, identity management, verification workflows, and scholarship discovery through an intuitive futuristic user experience.
