@@ -10,30 +10,30 @@
 }
 
 @utility glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #E5E5E5;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 18px 50px -34px rgba(15, 23, 42, 0.55);
 }
 
 @utility glass-edge {
-  border: 1px solid #E5E5E5;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 
 @utility saas-card {
-  background: #FAFAFA;
-  border: 1px solid #E5E5E5;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.86));
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 18px 45px -38px rgba(15, 23, 42, 0.72);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 @utility saas-card-hover {
   background: #FFFFFF;
-  border-color: #3B82F6;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  border-color: rgba(37, 99, 235, 0.65);
+  box-shadow: 0 18px 45px -26px rgba(37, 99, 235, 0.45), 0 10px 25px -22px rgba(15, 23, 42, 0.65);
   transform: translateY(-2px);
 }
 
@@ -41,8 +41,260 @@ html, body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  background-color: #F5F5F5;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 34rem),
+    radial-gradient(circle at 88% 12%, rgba(34, 197, 94, 0.12), transparent 28rem),
+    linear-gradient(180deg, #F8FAFC 0%, #EEF2F7 48%, #F8FAFC 100%);
   color: #222222;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  transform: translateZ(0);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.75);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.78), rgba(248, 250, 252, 0.55)),
+    radial-gradient(circle at 16% 18%, rgba(37, 99, 235, 0.14), transparent 24rem),
+    radial-gradient(circle at 86% 4%, rgba(20, 184, 166, 0.13), transparent 22rem),
+    #F5F7FB;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 76%);
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(1.18);
+  -webkit-backdrop-filter: blur(20px) saturate(1.18);
+  box-shadow: 0 14px 35px -32px rgba(15, 23, 42, 0.65);
+}
+
+.app-header > div:first-child > div:first-child,
+.login-stage .w-16.h-16 {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 28px -18px rgba(15, 23, 42, 0.75);
+}
+
+.app-header > div:first-child > div:first-child::after,
+.login-stage .w-16.h-16::after {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.5), transparent 70%);
+  transform: translateX(-90%) rotate(16deg);
+  animation: sheen 4.8s ease-in-out infinite;
+}
+
+.login-stage {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(37, 99, 235, 0.12), transparent 28rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.94));
+}
+
+.login-stage::before {
+  content: "";
+  position: absolute;
+  width: min(78vw, 680px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 999px;
+  animation: slow-orbit 18s linear infinite;
+}
+
+.app-sidebar {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.72);
+}
+
+.app-sidebar button,
+.app-header button,
+.app-main button,
+.login-stage button {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.app-sidebar button:hover,
+.app-header button:hover,
+.app-main button:hover,
+.login-stage button:hover {
+  transform: translateY(-1px);
+}
+
+.app-sidebar button:active,
+.app-header button:active,
+.app-main button:active,
+.login-stage button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.app-main {
+  background: transparent;
+}
+
+.app-main > div {
+  animation: view-rise 420ms ease both;
+}
+
+.saas-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.saas-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.72), transparent 34%);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.saas-card:hover {
+  border-color: rgba(37, 99, 235, 0.52);
+  box-shadow: 0 20px 55px -34px rgba(37, 99, 235, 0.7), 0 14px 34px -30px rgba(15, 23, 42, 0.8);
+  transform: translateY(-2px);
+}
+
+.saas-card:hover::before {
+  opacity: 1;
+}
+
+.app-main .grid > .saas-card,
+.app-main .grid > div {
+  animation: card-rise 460ms ease both;
+}
+
+.app-main .grid > :nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.app-main .grid > :nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.app-main .grid > :nth-child(4) {
+  animation-delay: 135ms;
+}
+
+.app-main input,
+.app-main select,
+.login-stage input {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.app-main input:focus,
+.app-main select:focus,
+.login-stage input:focus {
+  border-color: rgba(37, 99, 235, 0.7);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.recharts-wrapper {
+  filter: drop-shadow(0 16px 26px rgba(15, 23, 42, 0.06));
+}
+
+@keyframes view-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sheen {
+  0%, 42% {
+    transform: translateX(-90%) rotate(16deg);
+  }
+  58%, 100% {
+    transform: translateX(90%) rotate(16deg);
+  }
+}
+
+@keyframes slow-orbit {
+  from {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+  }
+  to {
+    transform: rotate(360deg) translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-header {
+    padding-inline: 1rem;
+  }
+
+  .app-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Hide scrollbar */

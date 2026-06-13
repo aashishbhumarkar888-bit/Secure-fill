@@ -786,10 +786,10 @@ export default function App() {
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#222222] antialiased flex flex-col font-sans transition-all">
+    <div className="app-shell min-h-screen bg-[#F5F5F5] text-[#222222] antialiased flex flex-col font-sans transition-all">
       
       {/* SaaS Premium Navigation Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#E5E5E5] px-6 h-16 flex items-center justify-between shadow-sm">
+      <header className="app-header sticky top-0 z-50 bg-white border-b border-[#E5E5E5] px-6 h-16 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#222222] flex items-center justify-center text-white">
             <span className="material-symbols-outlined select-none text-xl font-bold">
@@ -979,8 +979,13 @@ export default function App() {
 
       {/* Logged Out Splash Screen */}
       {!isLoggedIn && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#FFFFFF] relative">
-          <div className="max-w-md w-full text-center space-y-6">
+        <div className="login-stage flex-1 flex flex-col items-center justify-center p-6 bg-[#FFFFFF] relative">
+          <motion.div
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            className="max-w-md w-full text-center space-y-6"
+          >
             <div className="w-16 h-16 bg-[#FAFAFA] border border-[#E5E5E5] rounded-2xl flex items-center justify-center text-[#222222] mx-auto shadow-md">
               <Lock className="w-8 h-8 text-[#222222]" />
             </div>
@@ -1021,7 +1026,7 @@ export default function App() {
               <Fingerprint className="w-4 h-4 text-[#3B82F6]" />
               Scan Biometric thumb
             </button>
-          </div>
+          </motion.div>
 
           {/* GOOGLE ACCOUNTS DIALOG POPUP */}
           <AnimatePresence>
@@ -1434,7 +1439,7 @@ export default function App() {
         <div className="flex-1 flex flex-col md:flex-row relative">
           
           {/* Dynamic Navigation Sidebar */}
-          <nav className="w-full md:w-64 bg-white border-r border-[#E5E5E5] p-3 flex flex-col gap-1 md:h-[calc(100vh-64px)] overflow-y-auto no-scrollbar justify-between">
+          <nav className="app-sidebar w-full md:w-64 bg-white border-r border-[#E5E5E5] p-3 flex flex-col gap-1 md:h-[calc(100vh-64px)] overflow-y-auto no-scrollbar justify-between">
             <div className="space-y-4">
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#666666] px-3">Primary Navigation</span>
               <div className="space-y-1">
@@ -1519,7 +1524,7 @@ export default function App() {
           </nav>
 
           {/* MAIN CONTAINER STREAM */}
-          <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto no-scrollbar md:h-[calc(100vh-64px)] bg-[#F5F5F5]">
+          <main className="app-main flex-1 p-6 md:p-8 space-y-6 overflow-y-auto no-scrollbar md:h-[calc(100vh-64px)] bg-[#F5F5F5]">
             
             {/* VIEW 1: MASTER OVERVIEW DASHBOARD */}
             {activeTab === 'Overview' && (
