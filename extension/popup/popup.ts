@@ -164,23 +164,60 @@ export async function initPopup(): Promise<void> {
     console.log('[SecureFill Popup] Initializing popup UI');
 
     const statusEl = document.getElementById('sf-status') as HTMLDivElement;
-    const fullName = document.getElementById('sf-fullName') as HTMLInputElement;
-    const email = document.getElementById('sf-email') as HTMLInputElement;
-    const phone = document.getElementById('sf-phone') as HTMLInputElement;
+
+    // Get all input fields
+    const fields: Record<keyof UserProfile, HTMLInputElement | HTMLSelectElement> = {
+      fullName: document.getElementById('sf-fullName') as HTMLInputElement,
+      firstName: document.getElementById('sf-firstName') as HTMLInputElement,
+      lastName: document.getElementById('sf-lastName') as HTMLInputElement,
+      email: document.getElementById('sf-email') as HTMLInputElement,
+      phone: document.getElementById('sf-phone') as HTMLInputElement,
+      age: document.getElementById('sf-age') as HTMLInputElement,
+      gender: document.getElementById('sf-gender') as HTMLSelectElement,
+      dateOfBirth: document.getElementById('sf-dateOfBirth') as HTMLInputElement,
+      address: document.getElementById('sf-address') as HTMLInputElement,
+      city: document.getElementById('sf-city') as HTMLInputElement,
+      state: document.getElementById('sf-state') as HTMLInputElement,
+      country: document.getElementById('sf-country') as HTMLInputElement,
+      pincode: document.getElementById('sf-pincode') as HTMLInputElement,
+      id: document.getElementById('sf-id') as HTMLInputElement,
+      enrollmentNumber: document.getElementById('sf-enrollmentNumber') as HTMLInputElement,
+      enroll: undefined as any,
+      linkedin: document.getElementById('sf-linkedin') as HTMLInputElement,
+      github: document.getElementById('sf-github') as HTMLInputElement,
+      resumeUrl: undefined as any,
+      resumeText: undefined as any,
+      lastUpdated: undefined as any,
+      version: undefined as any,
+    };
+
     const saveBtn = document.getElementById('sf-save') as HTMLButtonElement;
     const autofillNow = document.getElementById('sf-autofillNow') as HTMLButtonElement;
     const clearBtn = document.getElementById('sf-clear') as HTMLButtonElement;
     const blockBtn = document.getElementById('sf-blockDomain') as HTMLButtonElement;
     const autofillOnLoad = document.getElementById('sf-autofillOnLoad') as HTMLInputElement;
 
+    const showStatus = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+      statusEl.style.display = 'block';
+      setTimeout(() => {
+        statusEl.style.display = 'none';
+      }, 3000);
+    };
+
     // Load existing profile
     try {
       const profile = await StorageManager.getUserProfile();
-      fullName.value = profile.fullName ?? '';
-      email.value = profile.email ?? '';
-      phone.value = profile.phone ?? '';
+      
+      // Populate all fields
+      Object.entries(fields).forEach(([key, element]) => {
+        if (element && profile[key as keyof UserProfile]) {
+          element.value = String(profile[key as keyof UserProfile]) || '';
+        }
+      });
     } catch (err) {
-      console.warn('[SecureFill Popup] No existing profile', err);
+      console.warn('[SecureFill Popup] No existing profile, using defaults', err);
     }
 
     // Load autofill-on-load flag
@@ -190,56 +227,82 @@ export async function initPopup(): Promise<void> {
       autofillOnLoad.checked = !!onLoad;
     } catch {}
 
+    // Save button handler
     saveBtn.addEventListener('click', async () => {
-      const profile: UserProfile = {
-        fullName: fullName.value,
-        email: email.value,
-        phone: phone.value,
-      } as unknown as UserProfile;
+      const profile: Partial<UserProfile> = {};
+      
+      Object.entries(fields).forEach(([key, element]) => {
+        if (element && element.value) {
+          profile[key as keyof UserProfile] = element.value as any;
+        }
+      });
+
+      profile.lastUpdated = new Date().toISOString();
+      profile.version = 1;
 
       try {
-        await StorageManager.saveUserProfile(profile);
-        statusEl.textContent = 'Profile saved.';
+        await StorageManager.saveUserProfile(profile as UserProfile);
+        showStatus('✓ Profile saved successfully!', 'success');
       } catch (err) {
-        statusEl.textContent = 'Failed to save profile';
+        showStatus('✗ Failed to save profile', 'error');
+        console.error(err);
       }
     });
 
+    // Autofill button handler
     autofillNow.addEventListener('click', async () => {
-      statusEl.textContent = 'Sending autofill request...';
+      showStatus('Filling form...', 'info');
       try {
         chrome.runtime.sendMessage({ type: 'REQUEST_AUTOFILL' }, (resp) => {
           if (chrome.runtime.lastError) {
-            statusEl.textContent = 'Autofill error';
+            showStatus('✗ Autofill error', 'error');
+          } else if (resp?.success) {
+            showStatus('✓ Form filled!', 'success');
           } else {
-            statusEl.textContent = 'Autofill requested';
+            showStatus('Form filled (check tab)', 'info');
           }
         });
       } catch (err) {
-        statusEl.textContent = 'Autofill failed';
+        showStatus('✗ Autofill failed', 'error');
+        console.error(err);
       }
     });
 
+    // Clear button handler
     clearBtn.addEventListener('click', async () => {
-      await StorageManager.clearAll();
-      statusEl.textContent = 'Cleared stored data';
+      if (confirm('Clear all saved data?')) {
+        try {
+          await StorageManager.clearAll();
+          
+          // Clear all form fields
+          Object.values(fields).forEach((el) => {
+            if (el) el.value = '';
+          });
+          
+          showStatus('✓ All data cleared', 'success');
+        } catch (err) {
+          showStatus('✗ Failed to clear data', 'error');
+        }
+      }
     });
 
+    // Block domain button handler
     blockBtn.addEventListener('click', async () => {
       try {
         const domain = new URL(window.location.href).hostname;
         await StorageManager.addBlockedDomain(domain);
-        statusEl.textContent = `Blocked ${domain}`;
+        showStatus(`✓ Blocked ${domain}`, 'success');
       } catch (err) {
-        statusEl.textContent = 'Could not block domain';
+        showStatus('✗ Could not block domain', 'error');
       }
     });
 
+    // Autofill on load checkbox
     autofillOnLoad.addEventListener('change', async () => {
       const enabled = autofillOnLoad.checked;
       // @ts-ignore
       await StorageManager.setAutofillOnLoad(enabled);
-      statusEl.textContent = enabled ? 'Autofill on load enabled' : 'Autofill on load disabled';
+      showStatus(enabled ? '✓ Autofill on load enabled' : '✓ Autofill on load disabled', 'success');
     });
 
     console.log('[SecureFill Popup] Initialized');

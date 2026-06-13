@@ -164,58 +164,66 @@ async function handleFloatingButtonClick(): Promise<void> {
   floatingButton.setLoading(true);
 
   try {
-    const forms = FormDetector.detectForms();
-    if (forms.length === 0) {
-      floatingButton.showError('No forms detected');
-      return;
-    }
-
     let totalFieldsFilled = 0;
-    let totalSuccess = true;
 
-    for (const form of forms) {
-      const formElement = document.getElementById(form.formId) ||
-        (form.formId.startsWith('form-') && 
-          document.querySelectorAll('form')[parseInt(form.formId.split('-')[1])] as HTMLFormElement | null);
+    // Check if this is a Google Form
+    const isGoogleForm = window.location.href.includes('docs.google.com/forms') || 
+                         document.body.innerHTML.includes('google.com/forms');
 
-      if (!formElement || !(formElement instanceof HTMLFormElement)) {
-        continue;
+    if (isGoogleForm) {
+      console.log('[SecureFill] Detected Google Form, using specialized filling');
+      totalFieldsFilled = AutofillEngine.fillGoogleForm(currentProfile);
+    } else {
+      // Regular form autofill
+      const forms = FormDetector.detectForms();
+      if (forms.length === 0) {
+        floatingButton.showError('No forms detected');
+        return;
       }
 
-      // Generate field mappings
-      const visibleFields = AutofillEngine.getVisibleFields(form.fields);
-      const skippedFields = visibleFields.filter((f) => AutofillEngine.shouldSkipField(f));
-      const fieldsToFill = visibleFields.filter((f) => !AutofillEngine.shouldSkipField(f));
+      let totalSuccess = true;
 
-      const mappings = AutofillEngine.generateFieldMappings(fieldsToFill, currentProfile);
+      for (const form of forms) {
+        const formElement = document.getElementById(form.formId) ||
+          (form.formId.startsWith('form-') && 
+            document.querySelectorAll('form')[parseInt(form.formId.split('-')[1])] as HTMLFormElement | null);
 
-      // Fill form
-      const results = AutofillEngine.fillForm(formElement, mappings, currentProfile);
-      const isValid = AutofillEngine.validateFillResults(results);
+        if (!formElement || !(formElement instanceof HTMLFormElement)) {
+          continue;
+        }
 
-      if (!isValid) {
-        totalSuccess = false;
-      }
+        // Generate field mappings
+        const visibleFields = AutofillEngine.getVisibleFields(form.fields);
+        const skippedFields = visibleFields.filter((f) => AutofillEngine.shouldSkipField(f));
+        const fieldsToFill = visibleFields.filter((f) => !AutofillEngine.shouldSkipField(f));
 
-      const filledCount = results.filter((r) => r.success).length;
-      totalFieldsFilled += filledCount;
+        const mappings = AutofillEngine.generateFieldMappings(fieldsToFill, currentProfile);
 
-      // Log autofill action
-      try {
-        const domain = new URL(window.location.href).hostname;
-        await StorageManager.logAutofillAction(domain, filledCount, isValid);
-      } catch {
-        // Ignore logging errors
+        // Fill form
+        const results = AutofillEngine.fillForm(formElement, mappings, currentProfile);
+        const isValid = AutofillEngine.validateFillResults(results);
+
+        if (!isValid) {
+          totalSuccess = false;
+        }
+
+        const filledCount = results.filter((r) => r.success).length;
+        totalFieldsFilled += filledCount;
+
+        // Log autofill action
+        try {
+          const domain = new URL(window.location.href).hostname;
+          await StorageManager.logAutofillAction(domain, filledCount, isValid);
+        } catch {
+          // Ignore logging errors
+        }
       }
     }
 
     // Show result
-    if (totalSuccess && totalFieldsFilled > 0) {
+    if (totalFieldsFilled > 0) {
       floatingButton.showSuccess();
-      floatingButton.showNotification(`✓ Successfully filled ${totalFieldsFilled} field${totalFieldsFilled !== 1 ? 's' : ''}`);
-    } else if (totalFieldsFilled > 0) {
-      floatingButton.showSuccess();
-      floatingButton.showNotification(`Filled ${totalFieldsFilled} field${totalFieldsFilled !== 1 ? 's' : ''}`);
+      floatingButton.showNotification(`✓ Filled ${totalFieldsFilled} field${totalFieldsFilled !== 1 ? 's' : ''}`);
     } else {
       floatingButton.showError('Could not fill any fields');
     }

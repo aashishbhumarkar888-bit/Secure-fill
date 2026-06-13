@@ -218,4 +218,76 @@ export class AutofillEngine {
 
     return false;
   }
+
+  /**
+   * Fill Google Forms specifically
+   */
+  static fillGoogleForm(profile: UserProfile): number {
+    let filledCount = 0;
+
+    // Get all input fields in Google Forms (they're often in divs with aria-label or data-placeholder)
+    const allInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], textarea');
+
+    allInputs.forEach((input: Element) => {
+      const inputEl = input as HTMLInputElement | HTMLTextAreaElement;
+      if (inputEl.value) return; // Skip if already filled
+
+      const ariaLabel = inputEl.getAttribute('aria-label')?.toLowerCase() || '';
+      const placeholder = inputEl.getAttribute('placeholder')?.toLowerCase() || '';
+      const name = inputEl.getAttribute('name')?.toLowerCase() || '';
+      const id = inputEl.getAttribute('id')?.toLowerCase() || '';
+      const combinedText = `${ariaLabel} ${placeholder} ${name} ${id}`.toLowerCase();
+
+      // Map common Google Forms fields
+      if (ariaLabel.includes('name') || placeholder.includes('name') || combinedText.includes('full name')) {
+        if (this.fillField(inputEl, profile.fullName || profile.firstName || '')) filledCount++;
+      } else if (ariaLabel.includes('email') || placeholder.includes('email')) {
+        if (this.fillField(inputEl, profile.email || '')) filledCount++;
+      } else if (ariaLabel.includes('phone') || placeholder.includes('phone') || ariaLabel.includes('tel')) {
+        if (this.fillField(inputEl, profile.phone || '')) filledCount++;
+      } else if (ariaLabel.includes('age') || placeholder.includes('age')) {
+        if (this.fillField(inputEl, profile.age || '')) filledCount++;
+      } else if (ariaLabel.includes('first name') || placeholder.includes('first name')) {
+        if (this.fillField(inputEl, profile.firstName || profile.fullName?.split(' ')[0] || '')) filledCount++;
+      } else if (ariaLabel.includes('last name') || placeholder.includes('last name')) {
+        if (this.fillField(inputEl, profile.lastName || profile.fullName?.split(' ').pop() || '')) filledCount++;
+      } else if (ariaLabel.includes('city') || placeholder.includes('city')) {
+        if (this.fillField(inputEl, profile.city || '')) filledCount++;
+      } else if (ariaLabel.includes('state') || placeholder.includes('state')) {
+        if (this.fillField(inputEl, profile.state || '')) filledCount++;
+      } else if (ariaLabel.includes('country') || placeholder.includes('country')) {
+        if (this.fillField(inputEl, profile.country || '')) filledCount++;
+      } else if (ariaLabel.includes('address') || placeholder.includes('address')) {
+        if (this.fillField(inputEl, profile.address || '')) filledCount++;
+      } else if (ariaLabel.includes('zip') || placeholder.includes('zip') || ariaLabel.includes('postal')) {
+        if (this.fillField(inputEl, profile.pincode || '')) filledCount++;
+      } else if (ariaLabel.includes('id') || placeholder.includes('id')) {
+        if (this.fillField(inputEl, profile.id || profile.enrollmentNumber || '')) filledCount++;
+      } else if (ariaLabel.includes('enroll') || placeholder.includes('enroll')) {
+        if (this.fillField(inputEl, profile.enrollmentNumber || profile.enroll || '')) filledCount++;
+      }
+    });
+
+    // Handle select/dropdown fields
+    const allSelects = document.querySelectorAll('select');
+    allSelects.forEach((select: Element) => {
+      const selectEl = select as HTMLSelectElement;
+      if (selectEl.value) return;
+
+      const ariaLabel = selectEl.getAttribute('aria-label')?.toLowerCase() || '';
+      const name = selectEl.getAttribute('name')?.toLowerCase() || '';
+      const id = selectEl.getAttribute('id')?.toLowerCase() || '';
+
+      if (ariaLabel.includes('gender') || name.includes('gender') || id.includes('gender')) {
+        const options = Array.from(selectEl.options).find((opt) =>
+          opt.text.toLowerCase().includes(profile.gender?.toLowerCase() || '')
+        );
+        if (options && this.fillField(selectEl, options.value)) {
+          filledCount++;
+        }
+      }
+    });
+
+    return filledCount;
+  }
 }
