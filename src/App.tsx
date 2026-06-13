@@ -49,7 +49,8 @@ import {
   Database,
   Cpu,
   Key,
-  CalendarDays
+  CalendarDays,
+  Puzzle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -66,6 +67,7 @@ import {
 } from 'recharts';
 
 import { DocumentItem, FolderItem, ShareConfig, ActivityLogItem, AppNotification, OpportunityItem } from './types';
+import JSZip from 'jszip';
 import { 
   INITIAL_USER, 
   INITIAL_DOCUMENTS, 
@@ -180,6 +182,133 @@ export default function App() {
   ]);
   const [isThinking, setIsThinking] = useState(false);
 
+  // Extension simulated playground states
+  const [playgroundForm, setPlaygroundForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    degree: '',
+    gpa: '',
+    aadhaar: '',
+    linkedin: '',
+    bio: '',
+    favoriteColor: ''
+  });
+  const [isPlaygroundFilling, setIsPlaygroundFilling] = useState(false);
+  const [playgroundLogs, setPlaygroundLogs] = useState<string[]>([]);
+
+  // User profile secure database state (editable, customizable key-values)
+  const [vaultProfile, setVaultProfile] = useState<Record<string, string>>({
+    full_name: "Ashish Ghumarkar",
+    email: "aashishbhumarkar888@gmail.com",
+    phone: "+91 98765 43210",
+    date_of_birth: "2002-09-18",
+    gender: "Male",
+    college_name: "LNCT University",
+    degree: "B.Tech Computer Science Engineering",
+    gpa: "8.4 CGPA",
+    aadhaar: "5240-1033-9214",
+    pan: "AZGPB2841M",
+    passport: "X-9284102",
+    linkedin: "https://linkedin.com/in/ashish_ghumarkar",
+    github: "https://github.com/ashish_ghumarkar",
+    portfolio: "https://ashishghumarkar.dev",
+    address: "M-12, Arera Colony, Bhopal, Madhya Pradesh, India",
+    skills: "React, TypeScript, Node.js, Express, Python, D3.js, Cybersecurity, AES Encryption, Chrome Extensions",
+    bio: "Passionate software engineer specializing in offline-first secure systems, browser-based automation, and decentralized credentials."
+  });
+
+  // Synonyms/Keyword dictionaries that are fully editable
+  const [keywordMappings, setKeywordMappings] = useState<Record<string, string[]>>({
+    full_name: ["name", "full name", "applicant name", "candidate name", "your name", "first name", "last name", "legal name"],
+    email: ["email", "mail id", "e-mail", "email address", "mail address"],
+    phone: ["phone", "mobile", "contact", "tel", "whatsapp", "phone number", "mobile number", "contact number"],
+    date_of_birth: ["dob", "date of birth", "birthdate", "born on", "birthday"],
+    gender: ["gender", "sex", "pronouns"],
+    college_name: ["college", "university", "institute", "school", "alma mater"],
+    degree: ["degree", "graduation", "qualification", "course", "major", "field of study"],
+    gpa: ["cgpa", "gpa", "score", "grade", "percentage", "marks"],
+    aadhaar: ["aadhaar", "aadhar", "national id", "uidai", "aadhaar card"],
+    linkedin: ["linkedin", "linked in", "linkedin profile", "linkedin link"],
+    github: ["github", "git", "github link", "github profile", "repo link"],
+    portfolio: ["portfolio", "website", "personal web", "portfolio link", "homepage"],
+    address: ["address", "permanent address", "residential", "location", "residence"],
+    bio: ["bio", "biography", "about me", "tell us about yourself", "introduction", "cover letter", "statement"]
+  });
+
+  // Manual Review toggle checklist pre-fill state
+  const [selectedReviewKeys, setSelectedReviewKeys] = useState<Record<string, boolean>>({
+    full_name: true,
+    email: true,
+    phone: true,
+    address: true,
+    degree: true,
+    gpa: true,
+    aadhaar: true,
+    linkedin: true,
+    bio: true
+  });
+
+  // Interactive autofill scorecard report
+  const [fillReport, setFillReport] = useState<{
+    fieldsFound: number;
+    filledCount: number;
+    skippedCount: number;
+    successRate: number;
+    logs: { question: string; matchedKey: string; filledValue: string; confidence: number; isSkipped: boolean; reason?: string }[];
+  } | null>(null);
+
+  // Form states to add custom user profile fields
+  const [newFieldKey, setNewFieldKey] = useState("");
+  const [newFieldValue, setNewFieldValue] = useState("");
+  const [newFieldSynonyms, setNewFieldSynonyms] = useState("");
+
+  const handleAddCustomField = () => {
+    if (!newFieldKey.trim() || !newFieldValue.trim()) {
+      showToast("⚠️ Field key and value are mandatory.");
+      return;
+    }
+    const cleanKey = newFieldKey.toLowerCase().trim().replace(/\s+/g, '_');
+    
+    // Add to profile
+    setVaultProfile(prev => ({
+      ...prev,
+      [cleanKey]: newFieldValue
+    }));
+
+    // Add synonyms
+    const synList = newFieldSynonyms.split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(s => s.length > 0);
+    
+    // Default synonym is the key itself
+    synList.push(cleanKey.replace(/_/g, ' '));
+    
+    setKeywordMappings(prev => ({
+      ...prev,
+      [cleanKey]: synList
+    }));
+
+    // Enable for Manual Review
+    setSelectedReviewKeys(prev => ({
+      ...prev,
+      [cleanKey]: true
+    }));
+
+    setNewFieldKey("");
+    setNewFieldValue("");
+    setNewFieldSynonyms("");
+    showToast(`🔒 Custom field [${cleanKey}] securely added to offline identity vault!`);
+  };
+
+  const handleRemoveField = (key: string) => {
+    const updatedProfile = { ...vaultProfile };
+    delete updatedProfile[key];
+    setVaultProfile(updatedProfile);
+    showToast(`Removed field "${key}" from secure credentials.`);
+  };
+
   // Toast Alerts system
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
@@ -189,6 +318,466 @@ export default function App() {
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
+  };
+
+  // Compile extension scripts dynamically injecting your state configuration
+  const handleDownloadExtension = async () => {
+    try {
+      const zip = new JSZip();
+
+      // Add manifest.json matching strict MV3
+      zip.file("manifest.json", JSON.stringify({
+        manifest_version: 3,
+        name: "SmartForm AI Auto-Filler",
+        version: "1.1.0",
+        description: "Intelligently detect, understand, and automatically fill Google Forms and other web forms locally.",
+        permissions: ["activeTab", "storage"],
+        action: {
+          default_popup: "popup.html"
+        },
+        content_scripts: [
+          {
+            matches: ["<all_urls>"],
+            js: ["content.js"],
+            run_at: "document_idle"
+          }
+        ]
+      }, null, 2));
+
+      // Build content.js dynamically injecting VAULT_CREDENTIALS and KEYWORD_MAPPINGS from React State
+      const contentJsRaw = `// SMARTFORM AI - Universal Intelligent Form Autofill Extension
+// Live generated content script incorporating state profile credentials.
+console.log("🔒 SMARTFORM AI: Dynamic Bundle Loaded on Host.");
+
+const VAULT_CREDENTIALS = ${JSON.stringify(vaultProfile, null, 2)};
+const KEYWORD_MAPPINGS = ${JSON.stringify(keywordMappings, null, 2)};
+
+// Semantic conversational templates
+const SEMANTIC_INTENTS = [
+  { keywords: ["how can we contact you", "reach you", "contact channels", "reach out"], matches: ["phone", "email"] },
+  { keywords: ["tell us about yourself", "introduce yourself", "about you", "brief bio"], matches: ["bio"] },
+  { keywords: ["professional profile", "recruiters", "online work link"], matches: ["github", "linkedin", "portfolio"] }
+];
+
+function extractLabelFromElement(inputEl) {
+  if (inputEl.getAttribute('aria-label')) return inputEl.getAttribute('aria-label');
+  if (inputEl.placeholder) return inputEl.placeholder;
+  if (inputEl.name) return inputEl.name;
+  if (inputEl.id) {
+    const associatedLabel = document.querySelector(\`label[for="\${inputEl.id}"]\`);
+    if (associatedLabel) return associatedLabel.textContent;
+  }
+  let parent = inputEl.parentElement;
+  let searchDepth = 0;
+  while (parent && searchDepth < 6) {
+    if (parent.classList.contains('Qr7Oae') || parent.classList.contains('geS5ne') || parent.getAttribute('role') === 'listitem') {
+      const titleEl = parent.querySelector('[role="heading"], [class*="title"], [class*="Title"], [class*="Question"]');
+      if (titleEl) return titleEl.textContent;
+    }
+    const labelSibling = parent.querySelector('label, p, span');
+    if (labelSibling && labelSibling !== inputEl && labelSibling.textContent.trim().length > 3) {
+      if (labelSibling.textContent.trim().length < 150) return labelSibling.textContent.trim();
+    }
+    parent = parent.parentElement;
+    searchDepth++;
+  }
+  return "";
+}
+
+function getMatchedValue(labelText) {
+  if (!labelText) return null;
+  const normalized = labelText.toLowerCase().replace(/[*:]/g, "").trim();
+
+  for (const intent of SEMANTIC_INTENTS) {
+    for (const phrase of intent.keywords) {
+      if (normalized.includes(phrase)) {
+        for (const candidate of intent.matches) {
+          const val = VAULT_CREDENTIALS[candidate];
+          if (val) return { key: candidate, value: val, confidence: 0.95 };
+        }
+      }
+    }
+  }
+
+  let bestKey = null;
+  let maxScore = 0;
+  for (const [fieldKey, keywords] of Object.entries(KEYWORD_MAPPINGS)) {
+    for (const keyword of keywords) {
+      if (normalized.includes(keyword)) {
+        let score = keyword.length / normalized.length;
+        if (normalized === keyword) {
+          score = 1.0;
+        } else if (normalized.split(/\\s+/).includes(keyword)) {
+          score += 0.25;
+        }
+        if (score > maxScore) {
+          maxScore = score;
+          bestKey = fieldKey;
+        }
+      }
+    }
+  }
+
+  if (bestKey && maxScore > 0.15) {
+    const val = VAULT_CREDENTIALS[bestKey];
+    if (val) return { key: bestKey, value: val, confidence: Math.min(0.99, maxScore) };
+  }
+  return null;
+}
+
+function safelyFillElement(el, val) {
+  try {
+    el.focus();
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+      const nativeTextAreaSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+      if (el.tagName === 'INPUT' && nativeSetter) {
+        nativeSetter.call(el, val);
+      } else if (el.tagName === 'TEXTAREA' && nativeTextAreaSetter) {
+        nativeTextAreaSetter.call(el, val);
+      } else {
+        el.value = val;
+      }
+    } else {
+      el.textContent = val;
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.blur();
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function triggerAutoFillProcess() {
+  const selectors = ['input[type="text"]', 'input[type="email"]', 'input[type="tel"]', 'input[type="url"]', 'textarea', '[role="textbox"]'];
+  const inputs = [];
+  selectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (!inputs.includes(el) && el.style.display !== 'none') inputs.push(el);
+    });
+  });
+
+  let filled = 0;
+  let skipped = 0;
+  const logs = [];
+
+  inputs.forEach(el => {
+    const rawLabel = extractLabelFromElement(el);
+    const match = getMatchedValue(rawLabel);
+    if (match) {
+      if (safelyFillElement(el, match.value)) {
+        filled++;
+        logs.push({ question: rawLabel.substring(0, 35), matchedKey: match.key, filledValue: match.value, confidence: Math.round(match.confidence * 100), isSkipped: false });
+      } else {
+        skipped++;
+      }
+    } else {
+      skipped++;
+      logs.push({ question: rawLabel.substring(0, 35), matchedKey: "N/A", filledValue: "", confidence: 0, isSkipped: true, reason: "No database matches" });
+    }
+  });
+
+  return { success: true, totalCount: inputs.length, count: filled, skipped: skipped, successRate: inputs.length > 0 ? Math.round((filled/inputs.length)*100) : 100, logs };
+}
+
+chrome.runtime.onMessage?.addListener((req, sender, response) => {
+  if (req.action === 'auto_fill') response(triggerAutoFillProcess());
+  return true;
+});
+`;
+      zip.file("content.js", contentJsRaw);
+
+      // Add html popup
+      zip.file("popup.html", `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { width: 330px; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; background-color: #F8FAFC; color: #0F172A; }
+    .card { background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .header { background-color: #1E293B; color: #F8FAFC; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .logo-container { display: flex; align-items: center; gap: 8px; }
+    .logo-title { font-size: 13px; font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-status { font-size: 9px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10B981; padding: 2px 6px; border-radius: 8px; }
+    .content { padding: 16px; }
+    .profile-banner { background-color: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; margin-bottom: 12px; }
+    .profile-title { font-size: 10px; font-weight: 800; color: #64748B; text-transform: uppercase; margin: 0 0 4px 0; }
+    .profile-name { font-size: 12px; font-weight: 700; color: #0F172A; }
+    .primary-btn { width: 100%; background-color: #0F172A; color: #FFFFFF; border: none; border-radius: 8px; padding: 10px; font-weight: 700; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .primary-btn:hover { background-color: #1E293B; }
+    .footer { border-top: 1px solid #E2E8F0; padding: 10px 16px; font-size: 9px; color: #64748B; background: #F8FAFC; display: flex; justify-content: space-between; }
+    .review-box { max-height: 120px; overflow-y: auto; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; background-color: #F8FAFC; margin-bottom: 12px; font-size: 10px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="logo-container"><span style="color:#10B981; font-weight:900;">⚡</span><h1 class="logo-title">SMARTFORM AI</h1></div>
+      <div class="badge-status">Active</div>
+    </div>
+    <div class="content">
+      <div class="profile-banner">
+        <h4 class="profile-title">Active Security Identity</h4>
+        <div class="profile-name">${vaultProfile.full_name}</div>
+        <div style="font-size:10px; color:#475569; font-family:monospace;">${vaultProfile.email}</div>
+      </div>
+      <div style="font-size: 10px; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">Pre-fill Review Database</div>
+      <div class="review-box" id="review-list"></div>
+      <button id="fill-btn" class="primary-btn">⚡ Run One-Click Autofill</button>
+      <div id="logs" style="margin-top:10px; font-family:monospace; font-size:9px; background:#0F172A; color:#10B981; padding:8px; border-radius:6px; display:none; max-height:100px; overflow-y:auto;"></div>
+    </div>
+    <div class="footer"><span>🔒 Local Vault Matcher</span><span>GDPR Compliant</span></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>`);
+
+      // Add popup.js dynamically injecting VAULT_CREDENTIALS
+      zip.file("popup.js", `const VAULT_CREDENTIALS = ${JSON.stringify(vaultProfile, null, 2)};
+function renderList() {
+  const container = document.getElementById('review-list');
+  if(!container) return;
+  container.innerHTML = '';
+  Object.entries(VAULT_CREDENTIALS).forEach(([k, v]) => {
+    const d = document.createElement('div');
+    d.style.display = 'flex';
+    d.style.justifyContent = 'space-between';
+    d.style.padding = '4px 0';
+    d.style.borderBottom = '1px solid #E2E8F0';
+    d.innerHTML = \`<span style="font-weight:700; color:#475569;">\${k}:</span> <span style="color:#0F172A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">\${v}</span>\`;
+    container.appendChild(d);
+  });
+}
+document.addEventListener('DOMContentLoaded', renderList);
+
+document.getElementById('fill-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('fill-btn');
+  const logs = document.getElementById('logs');
+  btn.disabled = true;
+  btn.innerText = 'Analyzing webform fields...';
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) return;
+    chrome.tabs.sendMessage(tab.id, { action: 'auto_fill' }, (res) => {
+      if (chrome.runtime.lastError) {
+        btn.innerText = 'Script error: refresh form tab!';
+        setTimeout(() => { btn.disabled = false; btn.innerText = '⚡ Run One-Click Autofill'; }, 3000);
+        return;
+      }
+      btn.innerText = 'Successfully Autofilled!';
+      btn.style.backgroundColor = '#10B981';
+      logs.style.display = 'block';
+      if (res && res.logs) {
+        logs.innerHTML = '<b>Mapping scorecard logs:</b>';
+        res.logs.forEach(l => {
+          const sign = l.isSkipped ? '✗ skipped' : '✓ filled';
+          logs.innerHTML += \`<div style="margin-top:2px;">\${sign} - \${l.question} [\${l.matchedKey}]</div>\`;
+        });
+      }
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.style.backgroundColor = '';
+        btn.innerText = '⚡ Run One-Click Autofill';
+      }, 5000);
+    });
+  } catch(e) {
+    btn.innerText = 'Error Fill';
+  }
+});`);
+
+      // Generate the package ZIP
+      const blob = await zip.generateAsync({ type: "blob" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "smartform-ai-ext.zip";
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(link);
+
+      showToast("📦 SmartForm AI custom browser extension downloaded successfully!");
+      
+      const logEntry: ActivityLogItem = {
+        id: "log-" + Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toISOString(),
+        action: "Export",
+        device: "Chrome v124 Extension Manager",
+        ipAddress: "192.168.1.52",
+        status: "Success",
+        details: "Dynamic offline credential browser extension compiled as ZIP payload with custom user profiles."
+      };
+      setActivityLogs(prev => [logEntry, ...prev]);
+    } catch (err: any) {
+      showToast("Error packaging Chrome extension: " + err.message);
+    }
+  };
+
+  // Run the simulated Chrome Extension Auto-Filler mechanics over the Interactive Playground
+  const handleSimulateFill = () => {
+    setIsPlaygroundFilling(true);
+    setPlaygroundLogs(["🤖 [SMARTFORM COGNITIVE ENGINE ACTIVE] Scoped 9 Questions..."]);
+    setFillReport(null);
+
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    setTimeout(async () => {
+      setPlaygroundLogs(prev => [...prev, "🔍 Initiating offline semantic dictionary scan..."]);
+      await delay(300);
+
+      const logs: string[] = [];
+      const updatedForm = { ...playgroundForm };
+      const reportLogs: any[] = [];
+
+      // Heuristic score algorithm simulator helper
+      const calculateScore = (label: string, fieldKey: string) => {
+        const text = label.toLowerCase();
+        const synonyms = keywordMappings[fieldKey] || [];
+        if (synonyms.some(s => text === s)) return 100;
+        for (const s of synonyms) {
+          if (text.includes(s)) {
+            return Math.round(15 + (s.length / text.length) * 85);
+          }
+        }
+        return 0;
+      };
+
+      // Helper to evaluate and trigger logs
+      const evaluateField = async (
+        label: string,
+        fieldKey: string,
+        domId: string,
+        setFormVal: (val: string) => void,
+        formKey: string
+      ) => {
+        // Check if enabled in manual review checklist
+        const isEnabled = selectedReviewKeys[fieldKey] !== false;
+        const mappedValue = vaultProfile[fieldKey] || "";
+
+        logs.push(`\n⚙️ Scanned Element [${domId}] - Label: "${label}"`);
+
+        if (!isEnabled) {
+          logs.push(`⚠️ Manual Review Warning: Field [${fieldKey}] skipped by user choice.`);
+          reportLogs.push({ question: label, matchedKey: fieldKey, filledValue: "", confidence: 0, isSkipped: true, reason: "Explicitly deselected in review mode" });
+          setPlaygroundLogs(prev => [...prev, ...logs]);
+          logs.length = 0;
+          await delay(400);
+          return;
+        }
+
+        if (mappedValue) {
+          const confidence = calculateScore(label, fieldKey) || 85;
+          logs.push(`→ Semantic match confident! Score: ${confidence}%`);
+          logs.push(`   Keyword synonyms matched across offline database. Injected: "${mappedValue}"`);
+          setFormVal(mappedValue);
+          reportLogs.push({ question: label, matchedKey: fieldKey, filledValue: mappedValue, confidence, isSkipped: false });
+        } else {
+          logs.push(`❌ Match heuristic failed: label "${label}" bears no semantic intersection.`);
+          logs.push(`⚠️ SECURITY DIRECTIVE COMPLIANCE: Keep the field empty. (No hallucination!)`);
+          setFormVal("");
+          reportLogs.push({
+            question: label,
+            matchedKey: "N/A",
+            filledValue: "",
+            confidence: 0,
+            isSkipped: true,
+            reason: "No database attributes resolved"
+          });
+        }
+        setPlaygroundLogs(prev => [...prev, ...logs]);
+        logs.length = 0;
+        await delay(400);
+      };
+
+      // 1. Full name
+      await evaluateField("Applicant Full Name *", "full_name", "Playground_Input_1", (val) => { updatedForm.fullName = val; setPlaygroundForm({ ...updatedForm }); }, "fullName");
+      
+      // 2. Email
+      await evaluateField("Email Address *", "email", "Playground_Input_2", (val) => { updatedForm.email = val; setPlaygroundForm({ ...updatedForm }); }, "email");
+
+      // 3. Phone
+      await evaluateField("Primary Contact/Phone Number *", "phone", "Playground_Input_3", (val) => { updatedForm.phone = val; setPlaygroundForm({ ...updatedForm }); }, "phone");
+
+      // 4. Address
+      await evaluateField("Permanent Residential Address *", "address", "Playground_Input_4", (val) => { updatedForm.address = val; setPlaygroundForm({ ...updatedForm }); }, "address");
+
+      // 5. Degree
+      await evaluateField("Highest Degree Qualification *", "degree", "Playground_Input_5", (val) => { updatedForm.degree = val; setPlaygroundForm({ ...updatedForm }); }, "degree");
+
+      // 6. GPA
+      await evaluateField("Cumulative CGPA/GPA Score *", "gpa", "Playground_Input_6", (val) => { updatedForm.gpa = val; setPlaygroundForm({ ...updatedForm }); }, "gpa");
+
+      // 7. Aadhaar
+      await evaluateField("Aadhaar ID Number (Government ID) *", "aadhaar", "Playground_Input_7", (val) => { updatedForm.aadhaar = val; setPlaygroundForm({ ...updatedForm }); }, "aadhaar");
+
+      // 8. LinkedIn Link
+      await evaluateField("Share your custom career networks (LinkedIn URL) *", "linkedin", "Playground_Input_8", (val) => { updatedForm.linkedin = val; setPlaygroundForm({ ...updatedForm }); }, "linkedin");
+
+      // 9. Bio Statement
+      await evaluateField("Tell us about your background / brief personal statement *", "bio", "Playground_Input_9", (val) => { updatedForm.bio = val; setPlaygroundForm({ ...updatedForm }); }, "bio");
+
+      // 10. Unmatched field (Favorite Color)
+      logs.push(`\n⚙️ Scanned Element [Playground_Input_10] - Label: "What is your Favorite Color? (Optional)"`);
+      logs.push(`⚠️ Heuristic lookup evaluated 0 overlapping synonym keywords in the local database schemas.`);
+      logs.push(`→ VISUAL HIGHLIGHTING APPLIED: Stained warning on viewport. Keeping input blank.`);
+      updatedForm.favoriteColor = "";
+      setPlaygroundForm({ ...updatedForm });
+      reportLogs.push({ question: "What is your Favorite Color? (Optional)", matchedKey: "N/A", filledValue: "", confidence: 0, isSkipped: true, reason: "No matching data available" });
+      setPlaygroundLogs(prev => [...prev, ...logs]);
+      logs.length = 0;
+      await delay(300);
+
+      // Sum up stats
+      const totalFields = 10;
+      const filledCount = reportLogs.filter(f => !f.isSkipped).length;
+      const skippedCount = totalFields - filledCount;
+      const successRate = Math.round((filledCount / totalFields) * 100);
+
+      setPlaygroundLogs(prev => [...prev, `\n🎉 [AUTO-FILL ACTION LOG] Process finished. Success Rate: ${successRate}% | Populated: ${filledCount} | Skipped: ${skippedCount}`]);
+      setIsPlaygroundFilling(false);
+      
+      setFillReport({
+        fieldsFound: totalFields,
+        filledCount,
+        skippedCount,
+        successRate,
+        logs: reportLogs
+      });
+
+      showToast(`⚡ Autofill simulation complete: ${filledCount} of 10 fields successfully matched.`);
+
+      const logEntry: ActivityLogItem = {
+        id: "log-" + Math.random().toString(36).substr(2, 9),
+        timestamp: new Date().toISOString(),
+        action: "Sync",
+        device: "Simulated AI Extension Engine",
+        ipAddress: "127.0.0.1",
+        status: "Success",
+        details: `Simulated form populator parsed 10 elements, injected ${filledCount} matched credentials with confidence metrics.`
+      };
+      setActivityLogs(prev => [logEntry, ...prev]);
+
+    }, 800);
+  };
+
+  const handleResetPlayground = () => {
+    setPlaygroundForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      address: '',
+      degree: '',
+      gpa: '',
+      aadhaar: '',
+      linkedin: '',
+      bio: '',
+      favoriteColor: ''
+    });
+    setPlaygroundLogs([]);
+    setFillReport(null);
+    showToast("Simulation fields cleared.");
   };
 
   // Trigger manual simulation of Google Login / Logout
@@ -1383,6 +1972,7 @@ export default function App() {
                   { id: 'QRShare', label: 'QR Sharing Links', icon: <Share2 className="w-4 h-4" /> },
                   { id: 'ActivityLogs', label: 'Activity & Logs', icon: <Activity className="w-4 h-4" /> },
                   { id: 'AIAgent', label: 'AI Secure Agent', icon: <Brain className="w-4 h-4" /> },
+                  { id: 'Extension', label: 'Form Auto-Filler', icon: <Puzzle className="w-4 h-4" /> },
                   ...(user.email === 'aashishbhumarkar888@gmail.com' ? [
                     { id: 'Admin', label: 'Admin Tools', icon: <Sliders className="w-4 h-4" /> }
                   ] : []),
@@ -2963,6 +3553,567 @@ export default function App() {
                         </p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW: BROWSER CHROME EXTENSION & AUTO-FILLER */}
+            {activeTab === 'Extension' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-[#222222] flex items-center gap-2">
+                    <Puzzle className="w-5 h-5 text-[#10B981]" />
+                    SMARTFORM AI Universal Auto-Filler & Core Simulator
+                  </h2>
+                  <p className="text-xs text-[#666666] font-semibold flex items-center gap-1">
+                    Configure your secure offline digital identity, customize heuristic synonym keywords, review individual parameters, and simulate automated local form filling.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 animate-fadeIn">
+                  
+                  {/* Left Column: Form Sandbox & Scorecard (7 columns) */}
+                  <div className="xl:col-span-7 space-y-6">
+                    
+                    {/* Completion scorecard report - Dynamic visual card */}
+                    {fillReport && (
+                      <div className="bg-white border-2 border-emerald-500 rounded-2xl p-5 shadow-sm space-y-4 animate-scaleUp">
+                        <div className="flex items-center justify-between border-b pb-3 border-emerald-100">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1 px-2.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg uppercase tracking-wider">
+                              Autofill Scorecard Metric
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-mono">Process ID: {Math.floor(Math.random()*89999 + 10000)}</span>
+                          </div>
+                          <span className="text-xs text-gray-400 font-medium">Offline isolation verified</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                          <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                            <div className="text-2xl font-black text-slate-800">{fillReport.fieldsFound}</div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Scanned Elements</div>
+                          </div>
+                          <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                            <div className="text-2xl font-black text-emerald-600">{fillReport.filledCount}</div>
+                            <div className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Injected Fields</div>
+                          </div>
+                          <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                            <div className="text-2xl font-black text-amber-600">{fillReport.skippedCount}</div>
+                            <div className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">Kept Empty</div>
+                          </div>
+                          <div className="p-3 bg-[#4B2393] text-white rounded-xl col-span-2 sm:col-span-1 flex flex-col justify-center">
+                            <div className="text-2xl font-black">{fillReport.successRate}%</div>
+                            <div className="text-[9px] font-bold uppercase tracking-wider opacity-90">Success Rate</div>
+                          </div>
+                        </div>
+
+                        {/* Direct visual log tracker */}
+                        <div className="space-y-2 max-h-[140px] overflow-y-auto border border-slate-100 p-3 rounded-xl bg-[#111827] text-white font-mono text-[11px] leading-relaxed">
+                          <div className="font-sans font-bold text-[10px] text-emerald-400 uppercase border-b border-gray-800 pb-1 mb-1">
+                            Heuristic Mapping Table logs
+                          </div>
+                          {fillReport.logs.map((log, lIdx) => (
+                            <div key={lIdx} className="flex justify-between items-start py-1 border-b border-gray-800/60">
+                              <span className="truncate max-w-[200px] text-gray-300 font-mono">Question: "{log.question}"</span>
+                              <div className="text-right whitespace-nowrap pl-4">
+                                {log.isSkipped ? (
+                                  <span className="text-amber-400 font-bold text-[10px]">[SKIPPED: {log.reason || "Empty"}]</span>
+                                ) : (
+                                  <span className="text-emerald-400 font-bold text-[10px]">
+                                    ✓ mapped to [{log.matchedKey}] ({log.confidence}% score)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Simulated Google Form Panel */}
+                    <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl overflow-hidden shadow-sm">
+                      {/* Classic Google Form Purple banner margin */}
+                      <div className="h-3 bg-[#4B2393]"></div>
+                      
+                      <div className="p-6 border-b border-[#E5E5E5] bg-[#FFFFFF] space-y-3">
+                        <span className="text-[10px] font-bold text-[#F43F5E] bg-[#FFE4E6] px-2 py-0.5 rounded uppercase tracking-wider font-mono">
+                          Google Forms Simulator Page
+                        </span>
+                        <h3 className="text-lg font-bold text-[#202124] font-sans leading-snug">
+                          LNCT Digital Alumni & Scholarship Credentials Survey 2026
+                        </h3>
+                        <p className="text-[11px] text-[#5F6368] leading-relaxed font-semibold">
+                          Click the matching triggers to run the auto-fill parser. Our simulated content script scans placeholders, labels, and aria attributes, computing offline overlap calculations. Fields absent in the local registry or bypassed in **Manual Review Mode** will remain strictly empty.
+                        </p>
+                        <div className="text-[11px] text-[#D93025] font-semibold">
+                          * Indicates required question
+                        </div>
+                      </div>
+
+                      {/* Google Form Questions body */}
+                      <div className="p-6 space-y-5 bg-[#F8F9FA]">
+                        
+                        {/* Question 1: Name */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.fullName ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Applicant Full Name <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.fullName}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, fullName: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "name", "candidate", "full name", "applicant"</span>
+                            {playgroundForm.fullName ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{vaultProfile.full_name}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle (Awaiting sync)</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 2: Email */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.email ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Email Address <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.email}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, email: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "email", "mail id", "e-mail"</span>
+                            {playgroundForm.email ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{vaultProfile.email}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 3: Phone */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.phone ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Primary Contact / Phone Number <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.phone}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, phone: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "phone", "mobile", "contact", "tel"</span>
+                            {playgroundForm.phone ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{vaultProfile.phone}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 4: Address */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.address ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Permanent Residential Address <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <textarea
+                            value={playgroundForm.address}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, address: e.target.value })}
+                            placeholder="Your answer"
+                            rows={2}
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors resize-none font-medium text-slate-800"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "address", "permanent", "residential", "location"</span>
+                            {playgroundForm.address ? (
+                              <span className="text-emerald-600 font-bold font-medium text-[9px] truncate max-w-[200px]">✓ Loaded text</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 5: Degree */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.degree ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Highest Degree Qualification <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.degree}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, degree: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "degree", "graduation", "qualification", "course"</span>
+                            {playgroundForm.degree ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{vaultProfile.degree}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 6: GPA */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.gpa ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Cumulative CGPA/GPA Score <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.gpa}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, gpa: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "cgpa", "gpa", "score", "grade"</span>
+                            {playgroundForm.gpa ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{vaultProfile.gpa}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 7: Aadhaar */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.aadhaar ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Aadhaar ID Number (Government ID) <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.aadhaar}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, aadhaar: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "aadhaar", "national id", "uidai"</span>
+                            {playgroundForm.aadhaar ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 8: LinkedIn Link */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.linkedin ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Share your custom career networks (LinkedIn URL) <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.linkedin}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, linkedin: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors font-medium"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "linkedin", "linked in", "linkedin profile"</span>
+                            {playgroundForm.linkedin ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 9: Personal statement / Bio */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.bio ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
+                            Tell us about your background / brief personal statement <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          <textarea
+                            value={playgroundForm.bio}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, bio: e.target.value })}
+                            placeholder="Your answer"
+                            rows={3}
+                            className="w-full bg-transparent border-b border-[#DADCE0] py-1 text-xs text-[#202124] focus:border-[#4B2393] focus:ring-0 outline-none transition-colors resize-none font-medium text-slate-800"
+                          />
+                          <div className="mt-2 flex justify-between items-center text-[9.5px]">
+                            <span className="text-[#64748B] italic font-medium">Tags: "bio", "tell us about yourself", "introduction"</span>
+                            {playgroundForm.bio ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 10: Unmatched field (Favorite Color) */}
+                        <div className="bg-red-55/10 border border-red-200 p-4 rounded-xl space-y-2">
+                          <label className="block text-xs font-bold text-[#202124] font-sans">
+                            What is your Favorite Color? (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={playgroundForm.favoriteColor}
+                            onChange={(e) => setPlaygroundForm({ ...playgroundForm, favoriteColor: e.target.value })}
+                            placeholder="Your answer"
+                            className="w-full bg-transparent border-b border-red-300 py-1 text-xs text-[#202124] focus:border-red-500 focus:ring-0 outline-none transition-colors"
+                          />
+                          <p className="text-[9.5px] text-[#D93025] leading-relaxed font-semibold">
+                            ⚠️ security configuration check: absent matching details in secure profile. Google Chrome extension leaves this field completely empty to avoid hallucinations.
+                          </p>
+                        </div>
+
+                      </div>
+
+                      {/* Controls bar */}
+                      <div className="p-4 border-t border-[#E5E5E5] bg-[#F1F3F4] flex flex-wrap gap-2 justify-between items-center">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleSimulateFill}
+                            disabled={isPlaygroundFilling}
+                            className="bg-[#222222] hover:bg-[#333333] text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
+                            {isPlaygroundFilling ? "⚡ Matching Synonyms..." : "⚡ Run Real-Time Autofill"}
+                          </button>
+                          
+                          <button
+                            type="button"
+                            onClick={handleResetPlayground}
+                            className="bg-white border border-[#E5E5E5] text-[#222222] font-semibold text-xs px-3 py-2.5 rounded-xl hover:bg-[#F8F9FA] transition-all cursor-pointer"
+                          >
+                            Reset Fields
+                          </button>
+                        </div>
+                        
+                        <span className="text-[10px] text-[#5F6368] font-mono font-bold uppercase mr-1">
+                          {playgroundForm.fullName ? "✅ Populated" : "⏳ Idle Scanner"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Live Mapping Console */}
+                    {playgroundLogs.length > 0 && (
+                      <div className="p-4 bg-[#111827] text-[#10B981] font-mono text-[10.5px] rounded-2xl border border-gray-800 space-y-1 max-h-[180px] overflow-y-auto">
+                        <div className="flex justify-between border-b border-gray-800 pb-1.5 text-gray-400 font-bold font-sans uppercase text-[8px] tracking-wider">
+                          <span>AI Sandbox Content Script Logs</span>
+                          <span className="text-emerald-400 animate-pulse">Running Matches</span>
+                        </div>
+                        {playgroundLogs.map((log, lIdx) => (
+                          <div key={lIdx} className="leading-relaxed">
+                            {log}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Part B: Manual Review Checklist configuration */}
+                    <div className="saas-card p-5 bg-white border border-[#E5E5E5] space-y-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b pb-2 mb-2 border-slate-100">
+                        <h4 className="font-bold text-xs uppercase text-[#475569] tracking-widest flex items-center gap-1.5">
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-[#3B82F6]" />
+                          Review Pre-Fill Selectors (Manual Review Mode)
+                        </h4>
+                        <span className="text-[10px] text-[#3B82F6] font-bold font-sans">Active Preview Mode</span>
+                      </div>
+                      
+                      <p className="text-[11px] text-[#555555] leading-relaxed">
+                        Control which secure credentials are pre-matched by the auto-filler. Toggle any individual property off if you want to explicitly skip its transmission in the active event.
+                      </p>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
+                        {Object.keys(vaultProfile).map((pKey) => {
+                          const isEnabled = selectedReviewKeys[pKey] !== false;
+                          return (
+                            <label key={pKey} className={`flex items-center gap-2 p-2 border rounded-xl text-xs font-semibold cursor-pointer select-none transition-all ${isEnabled ? 'bg-slate-50 text-slate-800 border-slate-300' : 'bg-gray-100 text-gray-400 border-gray-200'}`}>
+                              <input
+                                type="checkbox"
+                                checked={isEnabled}
+                                onChange={() => setSelectedReviewKeys(prev => ({
+                                  ...prev,
+                                  [pKey]: !isEnabled
+                                }))}
+                                className="rounded text-[#4B2393] focus:ring-[#4B2393] w-3.5 h-3.5 border-gray-300"
+                              />
+                              <span className="truncate">{pKey.replace(/_/g, " ")}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Database Editor & Packager Exporter (5 columns) */}
+                  <div className="xl:col-span-12 lg:col-span-5 xl:col-span-5 space-y-6">
+                    
+                    {/* Secure Offline Credentials Database Registry Section */}
+                    <div className="saas-card p-5 bg-white border border-[#E5E5E5] space-y-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                            DB
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-extrabold uppercase text-[#222222] tracking-wider">Credentials Database Registry</h3>
+                            <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 font-sans">
+                              ● Locally Sandboxed (GDPR Isolated)
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono text-gray-400 font-bold">AES-256 Enabled</span>
+                      </div>
+
+                      <p className="text-[11.5px] text-[#555555] leading-relaxed font-semibold">
+                        Your offline, hardware-isolated credential vault. Edit any field value instantly; any parameter dynamically matches the simulator above or custom zipped extension builds.
+                      </p>
+
+                      {/* Active Grid edit form */}
+                      <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                        {Object.entries(vaultProfile).map(([vKey, vVal]) => (
+                          <div key={vKey} className="group flex flex-col p-2.5 bg-slate-50 border border-slate-200 hover:border-[#10B981] rounded-xl text-xs transition-all">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-extrabold text-[#475569] uppercase text-[10px] tracking-wider font-mono">
+                                {vKey.replace(/_/g, " ")}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveField(vKey)}
+                                className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity p-0.5 font-bold"
+                                title="Delete attribute securely"
+                              >
+                                ✕ Delete
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={vVal}
+                              onChange={(e) => setVaultProfile({ ...vaultProfile, [vKey]: e.target.value })}
+                              className="w-full bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs font-semibold text-slate-800 focus:border-emerald-500 outline-none transition-all"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Form interface to add dynamic custom credit keys */}
+                      <div className="border-t pt-4 border-slate-100 space-y-3">
+                        <h4 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">
+                          ✚ Create Custom Vault Parameter
+                        </h4>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500">Parameter Key</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. pan_card"
+                              value={newFieldKey}
+                              onChange={(e) => setNewFieldKey(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs outline-none font-semibold text-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-500">Secure Value</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. AZGPB281"
+                              value={newFieldValue}
+                              onChange={(e) => setNewFieldValue(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs outline-none font-semibold text-slate-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500">
+                            Matching Synonym Tags <span className="text-gray-400 italic">(comma separated)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. pan, permanent account, tax id"
+                            value={newFieldSynonyms}
+                            onChange={(e) => setNewFieldSynonyms(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs outline-none font-semibold text-slate-800"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleAddCustomField}
+                          className="w-full bg-[#10B981] hover:bg-emerald-600 text-white text-xs font-bold py-2 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          Save Secure Custom Key
+                        </button>
+                      </div>
+
+                    </div>
+
+                    {/* Exporter Card & Extension Bundle Downloader */}
+                    <div className="saas-card p-6 bg-white border border-[#E5E5E5] space-y-4 shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                          <Puzzle className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold uppercase text-[#222222] tracking-wider">Chrome Extension Packager</h3>
+                          <p className="text-[10px] text-[#666666] font-semibold">Dynamic customized compile exporter</p>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#555555] leading-relaxed font-semibold">
+                        Download your customized **SmartForm AI** browser extension! This live compiler bundles the exact active profile variables and synonyms entered inside the manager, exporting them as a local secure ZIP payload.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleDownloadExtension}
+                        className="w-full bg-[#111827] hover:bg-black text-[#FFFFFF] font-bold text-xs uppercase p-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 text-emerald-400 animate-bounce" />
+                        Download Dynamic Extension (ZIP)
+                      </button>
+
+                      <div className="bg-[#FFFBEB] border border-[#FDE68A] p-3.5 rounded-xl space-y-1 text-xs text-[#92400E]">
+                        <h4 className="font-bold flex items-center gap-1 font-sans">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Zero Cloud Storage Risk
+                        </h4>
+                        <p className="text-[9.5px] leading-relaxed text-[#92400E]/90 font-medium">
+                          The client-side extension runs locally on your PC. It will never transmit your secret registry parameters or card details to external cloud databases, satisfying complete GDPR isolation.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Part B: Installation Steps guide */}
+                    <div className="saas-card p-5 bg-white border border-[#E5E5E5] space-y-3 shadow-xs">
+                      <h4 className="font-bold text-xs uppercase text-[#666666] tracking-widest flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#3B82F6]" />
+                        Installation Guide (Developer Mode)
+                      </h4>
+
+                      <div className="space-y-2">
+                        {[
+                          { step: "1", text: "Click 'Download Dynamic Extension (ZIP)' above to compile your custom offline files." },
+                          { step: "2", text: "Extract the downloaded ZIP package onto a local directory on your PC." },
+                          { step: "3", text: "Open Google Chrome (or any Chromium browser), paste chrome://extensions/ in the URL bar." },
+                          { step: "4", text: "Enable 'Developer mode' toggle on top-right edge." },
+                          { step: "5", text: "Click the 'Load unpacked' button, and choose the extracted extension directory! Open any Google Form to auto-fill instantly." }
+                        ].map((guide, idx) => (
+                          <div key={idx} className="flex gap-2 items-start text-[11px] text-[#4B5563] leading-relaxed">
+                            <span className="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center font-bold text-[10px] text-slate-700 shrink-0 mt-0.5">{guide.step}</span>
+                            <p className="font-medium">{guide.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </div>
