@@ -9,6 +9,7 @@
     "build:extension": "vite build --mode extension",
     "build:extension:win": "vite build --mode extension",
     "generate:icons": "node scripts/generate-icons.cjs",
+    "generate:screenshots": "node scripts/generate-screenshots.cjs",
     "start": "node dist/server.cjs",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
