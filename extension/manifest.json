@@ -1,46 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "SecureFill AI",
+  "name": "SecureFill AI Auto-Filler",
   "version": "1.0.0",
-  "description": "AI-powered intelligent form autofill and secure data management",
-
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-
-  "host_permissions": [
-    "<all_urls>"
-  ],
-
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
+  "description": "Auto-fills Google Forms and generic web application pages with matched keys from your secure offline credentials.",
+  "permissions": ["activeTab", "storage"],
+  "action": {
+    "default_popup": "popup.html"
   },
-
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": false
+      "run_at": "document_idle"
     }
-  ],
-
-  "action": {
-    "default_title": "SecureFill AI",
-    "default_popup": "popup.html",
-    "default_icons": {
-      "16": "icons/icon.svg",
-      "48": "icons/icon.svg",
-      "128": "icons/icon.svg"
-    }
-  },
-
-  "icons": {
-    "16": "icons/icon.svg",
-    "48": "icons/icon.svg",
-    "128": "icons/icon.svg"
-  }
+  ]
 }
