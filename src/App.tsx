@@ -91,6 +91,7 @@ export default function App() {
   });
   const [accountPassword, setAccountPassword] = useState('');
   const [showPasswordRaw, setShowPasswordRaw] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
   const [authenticatingGoogle, setAuthenticatingGoogle] = useState(false);
@@ -1209,6 +1210,13 @@ export default function App() {
                     <form 
                       onSubmit={(e) => {
                         e.preventDefault();
+                        if (accountPassword !== '12345678') {
+                          setPasswordError('Invalid lock key. Please enter the security password (sandbox key: 12345678).');
+                          showToast('❌ Login blocked: Invalid terminal credentials');
+                          logSystemActivity("Login Blocked", `Unsuccessful authentication attempt for ${selectedAccount.email} due to bad password`, "Error");
+                          return;
+                        }
+                        setPasswordError(null);
                         handleGoogleSelect(selectedAccount.email, selectedAccount.name, selectedAccount.photo);
                       }}
                       className="space-y-4 border-t border-b border-[#F1F3F4] py-4"
@@ -1232,6 +1240,12 @@ export default function App() {
                           Change
                         </button>
                       </div>
+
+                      {passwordError && (
+                        <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-[11px] rounded-lg leading-relaxed font-semibold">
+                          ⚠️ {passwordError}
+                        </div>
+                      )}
 
                       <div className="space-y-1.5 text-xs text-[#202124]">
                         <div className="flex justify-between items-center">
@@ -1368,6 +1382,7 @@ export default function App() {
                   { id: 'Scholarships', label: 'Scholarship Matcher', icon: <Compass className="w-4 h-4" /> },
                   { id: 'QRShare', label: 'QR Sharing Links', icon: <Share2 className="w-4 h-4" /> },
                   { id: 'ActivityLogs', label: 'Activity & Logs', icon: <Activity className="w-4 h-4" /> },
+                  { id: 'AIAgent', label: 'AI Secure Agent', icon: <Brain className="w-4 h-4" /> },
                   ...(user.email === 'aashishbhumarkar888@gmail.com' ? [
                     { id: 'Admin', label: 'Admin Tools', icon: <Sliders className="w-4 h-4" /> }
                   ] : []),
@@ -2780,6 +2795,176 @@ export default function App() {
                   </div>
                 </div>
 
+              </div>
+            )}
+
+            {/* VIEW: AI SECURE AGENT SECTION */}
+            {activeTab === 'AIAgent' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-extrabold tracking-tight text-[#222222] flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-[#3B82F6]" />
+                    SECUREFILL AI Cryptographic Agent
+                  </h2>
+                  <p className="text-xs text-[#666666] font-semibold">
+                    Interact with your sandboxed Gemini OCR parser. SECUREFILL AI keeps all models strictly client OR server-proxy side, with no vector exposure to public web databases.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column: Interactive Chat Interface (7 columns) */}
+                  <div className="lg:col-span-7 flex flex-col bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden h-[580px] shadow-sm">
+                    {/* Header */}
+                    <div className="p-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E] animate-pulse"></span>
+                        <p className="text-xs font-bold text-[#222222] uppercase tracking-wider">Active Secure Session</p>
+                      </div>
+                      <span className="text-[10px] text-[#666666] font-mono bg-[#E5E5E5]/40 px-2 py-0.5 rounded font-bold">
+                        AES-256 Enabled
+                      </span>
+                    </div>
+
+                    {/* Chat Messages Log */}
+                    <div className="flex-1 p-4 overflow-y-auto space-y-4 no-scrollbar bg-[#FDFDFD]">
+                      {assistantLogs.map((item, idx) => {
+                        const isAi = item.sender === 'ai';
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex flex-col ${isAi ? 'items-start' : 'items-end'}`}
+                          >
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[9px] font-bold text-[#666666] font-mono leading-none">
+                                {isAi ? '🤖 SECUREFILL AGENT' : `👤 ${user.name}`}
+                              </span>
+                              <span className="text-[8px] text-[#999999] font-mono">
+                                {item.timestamp}
+                              </span>
+                            </div>
+                            <div
+                              className={`p-3.5 rounded-2xl text-xs leading-relaxed max-w-[85%] border shadow-xs whitespace-pre-line ${
+                                isAi
+                                  ? 'bg-white border-[#E5E5E5] text-[#222222]'
+                                  : 'bg-[#222222] border-[#222222] text-white'
+                              }`}
+                            >
+                              {item.text}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {isThinking && (
+                        <div className="flex items-center gap-2 text-xs text-[#666666] italic animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce delay-100"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce delay-200"></span>
+                          Agent Decrypting OCR details...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preset Suggestion Prompts */}
+                    <div className="p-3 bg-[#FAFAFA] border-t border-[#E5E5E5] overflow-x-auto no-scrollbar whitespace-nowrap flex gap-2">
+                      {[
+                        "What is my Passport number and expiry?",
+                        "What is my verified B.Tech degree score?",
+                        "List my missing credentials for scholarships",
+                        "Tell me my Aadhaar address details",
+                        "Tell me about my PAN card status"
+                      ].map((promptText, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setAiAssistantQuery(promptText);
+                          }}
+                          className="bg-white hover:bg-[#F5F5F5] border border-[#E5E5E5] text-[#222222] font-semibold text-[10px] px-2.5 py-1.5 rounded-full cursor-pointer transition-all shrink-0 shadow-xs"
+                        >
+                          💬 {promptText}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Chat Input Field */}
+                    <div className="p-4 border-t border-[#E5E5E5] bg-white">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleAiAssistantSubmit();
+                        }}
+                        className="flex gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={aiAssistantQuery}
+                          onChange={(e) => setAiAssistantQuery(e.target.value)}
+                          placeholder="Ask anything about your uploaded identities or documents..."
+                          className="flex-1 bg-white border border-[#E5E5E5] rounded-xl px-4 py-2.5 text-xs text-[#222222] focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none font-sans"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!aiAssistantQuery.trim() || isThinking}
+                          className="bg-[#222222] hover:bg-[#333333] disabled:opacity-50 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-xl transition-all shadow-sm shrink-0 cursor-pointer"
+                        >
+                          Ask Agent
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Referenced Document Context Indexes (5 columns) */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="saas-card p-5 bg-white border border-[#E5E5E5] space-y-4">
+                      <div>
+                        <h3 className="font-bold text-xs uppercase text-[#666666] tracking-widest">Indexed Documents Context</h3>
+                        <p className="text-[10px] text-[#666666] leading-relaxed mt-1">
+                          Below are the active cryptographic vaults index files supplied as contextual system boundaries to Gemini for high-precision validation.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5 max-h-[350px] overflow-y-auto no-scrollbar pr-1 animate-fadeIn">
+                        {documents.map((doc) => {
+                          const isVerified = doc.verified;
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => {
+                                setAiAssistantQuery(`Tell me about the document named "${doc.name}"`);
+                              }}
+                              className="p-3 bg-[#FAFAFA] border border-[#E5E5E5] rounded-xl hover:border-[#3B82F6] hover:bg-blue-50/5 cursor-pointer text-left transition-all space-y-2"
+                            >
+                              <div className="flex items-start justify-between gap-1">
+                                <p className="text-xs font-bold text-[#222222] truncate max-w-[200px]">{doc.name}</p>
+                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                  isVerified ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#FEF3C7] text-[#B45309]'
+                                }`}>
+                                  {isVerified ? 'Verified' : 'Pending'}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-[#666666] line-clamp-1 italic">
+                                "{doc.dataSummary}"
+                              </p>
+                              <div className="flex items-center gap-2 pt-1 border-t border-[#E5E5E5]/60 text-[9px] text-[#999999] font-mono">
+                                <span>Size: {(doc.sizeBytes / 1024).toFixed(1)} KB</span>
+                                <span>•</span>
+                                <span>Cat: {doc.category}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="bg-[#EFF6FF] border border-[#BFDBFE] p-3.5 rounded-xl space-y-1.5 text-xs text-[#1E40AF]">
+                        <h4 className="font-bold">🔒 Secure Local Privacy Shield</h4>
+                        <p className="text-[10px] leading-relaxed text-[#1E40AF]/90">
+                          Credentials do not leave your terminal sandbox. Gemini parses indexed values on-demand to answer details without training models on personal fields.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
