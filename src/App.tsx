@@ -205,6 +205,8 @@ export default function App() {
     bio: '',
     favoriteColor: '',
     gender: '',
+    branch: '',
+    semester: '',
     scholarshipCategory: '',
     uploadedDocumentName: '',
     uploadedDocumentSize: '',
@@ -219,10 +221,12 @@ export default function App() {
     full_name: "Ashish Ghumarkar",
     email: "aashishbhumarkar888@gmail.com",
     phone: "+91 98765 43210",
-    date_of_birth: "2002-09-18",
+    date_of_birth: "2005-09-18",
     gender: "Male",
-    college_name: "LNCT University",
-    degree: "B.Tech Computer Science Engineering",
+    college_name: "LNCT (Lakshmi Narain College of Technology), Bhopal",
+    degree: "B.Tech Information Technology",
+    branch: "IT",
+    semester: "Semester-IV",
     gpa: "8.4 CGPA",
     aadhaar: "5240-1033-9214",
     pan: "AZGPB2841M",
@@ -232,7 +236,7 @@ export default function App() {
     portfolio: "https://ashishghumarkar.dev",
     address: "M-12, Arera Colony, Bhopal, Madhya Pradesh, India",
     skills: "React, TypeScript, Node.js, Express, Python, D3.js, Cybersecurity, AES Encryption, Chrome Extensions",
-    bio: "Passionate software engineer specializing in offline-first secure systems, browser-based automation, and decentralized credentials.",
+    bio: "Passionate software engineer pursuing B.Tech in IT from LNCT. Specializes in offline-first secure systems, browser-based automation, and decentralized credentials.",
     preferred_scholarship: "Academic Excellence Scholarship",
     agree_to_terms: "Yes"
   });
@@ -244,8 +248,10 @@ export default function App() {
     phone: ["phone", "mobile", "contact", "tel", "whatsapp", "phone number", "mobile number", "contact number"],
     date_of_birth: ["dob", "date of birth", "birthdate", "born on", "birthday"],
     gender: ["gender", "sex", "pronouns", "candidate gender", "applicant sex"],
-    college_name: ["college", "university", "institute", "school", "alma mater"],
+    college_name: ["college", "university", "institute", "school", "alma mater", "lnct"],
     degree: ["degree", "graduation", "qualification", "course", "major", "field of study"],
+    branch: ["branch", "major", "specialization", "course/branch", "field", "stream", "it", "information technology"],
+    semester: ["semester", "term", "academic term", "current semester", "semester-iv"],
     gpa: ["cgpa", "gpa", "score", "grade", "percentage", "marks"],
     aadhaar: ["aadhaar", "aadhar", "national id", "uidai", "aadhaar card"],
     linkedin: ["linkedin", "linked in", "linkedin profile", "linkedin link"],
@@ -264,6 +270,8 @@ export default function App() {
     phone: true,
     address: true,
     degree: true,
+    branch: true,
+    semester: true,
     gpa: true,
     aadhaar: true,
     linkedin: true,
@@ -453,11 +461,13 @@ const HINDI_TRANSLITERATION_MAP = {
   "+91 98765 43210": "+91 98765 43210",
   "Male": "पुरुष",
   "Female": "महिला",
-  "B.Tech Computer Science Engineering": "बी.टेक कंप्यूटर साइंस इंजीनियरिंग",
-  "LNCT University": "एलएनसीटी विश्वविद्यालय",
+  "B.Tech Information Technology": "बी.टेक सूचना प्रौद्योगिकी",
+  "LNCT (Lakshmi Narain College of Technology), Bhopal": "एलएनसीटी (लक्ष्मी नारायण कॉलेज ऑफ टेक्नोलॉजी), भोपाल",
+  "IT": "आईटी",
+  "Semester-IV": "सेमेस्टर-IV",
   "M-12, Arera Colony, Bhopal, Madhya Pradesh, India": "एम-12, अरेरा कॉलोनी, भोपाल, मध्य प्रदेश, भारत",
   "React, TypeScript, Node.js, Express, Python, D3.js, Cybersecurity, AES Encryption, Chrome Extensions": "रिएक्ट, टाइपस्क्रिप्ट, नोड.जेएस, एक्सप्रेस, पायथन, डी3.जेएस, साइबर सुरक्षा, एईएस एन्क्रिप्शन, क्रोम एक्सटेंशन",
-  "Passionate software engineer specializing in offline-first secure systems, browser-based automation, and decentralized credentials.": "ऑफलाइन-फर्स्ट सुरक्षित प्रणालियों, ब्राउज़र-आधारित स्वचालन और विकेन्द्रीकृत क्रेडेंशियल्स में विशेषज्ञता रखने वाले भावुक सॉफ्टवेयर इंजीनियर।"
+  "Passionate software engineer pursuing B.Tech in IT from LNCT. Specializes in offline-first secure systems, browser-based automation, and decentralized credentials.": "एलएनसीटी से आईटी में बी.टेक कर रहे जुनूनी सॉफ्टवेयर इंजीनियर। ऑफलाइन-फर्स्ट सुरक्षित प्रणालियों, ब्राउज़र-आधारित स्वचालन और विकेन्द्रीकृत क्रेडेंशियल्स में विशेषज्ञता।"
 };
 
 function translateToHindi(val) {
@@ -472,6 +482,16 @@ function translateToHindi(val) {
   clean = clean.replace(/\\bB\\.Tech\\b/gi, "बी.टेक");
   clean = clean.replace(/\\bEngineering\\b/gi, "इंजीनियरिंग");
   clean = clean.replace(/\\bComputer Science\\b/gi, "कंप्यूटर साइंस");
+  clean = clean.replace(/\\bInformation Technology\\b/gi, "सूचना प्रौद्योगिकी");
+  clean = clean.replace(/\\bIT\\b/gi, "आईटी");
+  clean = clean.replace(/\\bSemester-I\\b/gi, "सेमेस्टर-I");
+  clean = clean.replace(/\\bSemester-II\\b/gi, "सेमेस्टर-II");
+  clean = clean.replace(/\\bSemester-III\\b/gi, "सेमेस्टर-III");
+  clean = clean.replace(/\\bSemester-IV\\b/gi, "सेमेस्टर-IV");
+  clean = clean.replace(/\\bSemester-V\\b/gi, "सेमेस्टर-V");
+  clean = clean.replace(/\\bSemester-VI\\b/gi, "सेमेस्टर-VI");
+  clean = clean.replace(/\\bSemester-VII\\b/gi, "सेमेस्टर-VII");
+  clean = clean.replace(/\\bSemester-VIII\\b/gi, "सेमेस्टर-VIII");
   clean = clean.replace(/\\bIndia\\b/gi, "भारत");
   clean = clean.replace(/\\bBhopal\\b/gi, "भोपाल");
   clean = clean.replace(/\\bMadhya Pradesh\\b/gi, "मध्य प्रदेश");
@@ -795,7 +815,7 @@ function triggerAutoFillProcess(targetLanguage = 'en', overridingVault = null) {
     const match = getMatchedValue(rawLabel, activeVault);
     if (match) {
       let finalVal = match.value;
-      if (targetLanguage === 'hi') {
+      if (targetLanguage === 'hi' || /[\u0900-\u097F]/.test(rawLabel || "")) {
         finalVal = translateToHindi(finalVal);
       }
       if (safelyFillElement(el, finalVal)) {
@@ -833,12 +853,19 @@ function triggerAutoFillProcess(targetLanguage = 'en', overridingVault = null) {
       const match = getMatchedValue(rawLabel, activeVault);
       if (match) {
         let finalVal = match.value;
-        if (targetLanguage === 'hi') {
+        if (targetLanguage === 'hi' || /[\u0900-\u097F]/.test(rawLabel || "")) {
           finalVal = translateToHindi(finalVal);
         }
         let optionFound = false;
+        let transVal = translateToHindi(finalVal);
         Array.from(select.options).forEach(opt => {
-          if (opt.text.toLowerCase().includes(finalVal.toLowerCase()) || opt.value.toLowerCase().includes(finalVal.toLowerCase())) {
+          const optText = opt.text.toLowerCase();
+          const optVal = opt.value.toLowerCase();
+          if (
+            optText.includes(finalVal.toLowerCase()) || 
+            optVal.includes(finalVal.toLowerCase()) ||
+            (transVal && (optText.includes(transVal.toLowerCase()) || optVal.includes(transVal.toLowerCase())))
+          ) {
             select.value = opt.value;
             optionFound = true;
           }
@@ -862,11 +889,12 @@ function triggerAutoFillProcess(targetLanguage = 'en', overridingVault = null) {
       const match = getMatchedValue(questionLabel, activeVault);
       if (match) {
         let finalVal = match.value;
-        if (targetLanguage === 'hi') {
+        if (targetLanguage === 'hi' || /[\u0900-\u097F]/.test(questionLabel || "")) {
           finalVal = translateToHindi(finalVal);
         }
         
         let matchingCriteria = finalVal.toLowerCase().trim();
+        let transCriteria = translateToHindi(finalVal).toLowerCase().trim();
         const optionClickables = parentBlock.querySelectorAll('[role="radio"], [role="checkbox"], input[type="radio"], input[type="checkbox"], label');
         let selectedOption = false;
         
@@ -874,7 +902,15 @@ function triggerAutoFillProcess(targetLanguage = 'en', overridingVault = null) {
           let text = optionEl.textContent || optionEl.getAttribute('aria-label') || optionEl.value || "";
           text = text.toLowerCase().trim();
           
-          if (text && (text.includes(matchingCriteria) || matchingCriteria.includes(text) || (matchingCriteria === 'yes' && (text.includes('agree') || text.includes('yes') || text.includes('सत्यापित') || text.includes('सहमत'))))) {
+          if (text && (
+            text.includes(matchingCriteria) || 
+            matchingCriteria.includes(text) || 
+            text.includes(transCriteria) || 
+            transCriteria.includes(text) ||
+            (matchingCriteria === 'yes' && (text.includes('agree') || text.includes('yes') || text.includes('सत्यापित') || text.includes('सहमत'))) ||
+            (matchingCriteria === 'male' && text.includes('पुरुष')) ||
+            (matchingCriteria === 'female' && text.includes('महिला'))
+          )) {
             optionEl.click();
             if (optionEl.tagName === 'INPUT') {
               optionEl.checked = true;
@@ -1337,6 +1373,12 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
       // 11. Candidate Gender (Radio Buttons Choice Option)
       await evaluateField("Candidate Gender *", "gender", "Playground_Radio_Group_11", (val) => { updatedForm.gender = val; setPlaygroundForm({ ...updatedForm }); }, "gender");
 
+      // 11 B. Course / Branch (Radio Buttons Choice Option)
+      await evaluateField("Course / Branch *", "branch", "Playground_Radio_Group_11_B", (val) => { updatedForm.branch = val; setPlaygroundForm({ ...updatedForm }); }, "branch");
+
+      // 11 C. Semester (Radio Buttons Choice Option)
+      await evaluateField("Semester *", "semester", "Playground_Radio_Group_11_C", (val) => { updatedForm.semester = val; setPlaygroundForm({ ...updatedForm }); }, "semester");
+
       // 12. Preferred Scholarship Category (Select Options Choice Option)
       await evaluateField("Preferred Scholarship Category *", "preferred_scholarship", "Playground_Select_12", (val) => { updatedForm.scholarshipCategory = val; setPlaygroundForm({ ...updatedForm }); }, "scholarshipCategory");
 
@@ -1389,7 +1431,7 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
       }
 
       // Sum up stats
-      const totalFields = 14;
+      const totalFields = 16;
       const filledCount = reportLogs.filter(f => !f.isSkipped).length;
       const skippedCount = totalFields - filledCount;
       const successRate = Math.round((filledCount / totalFields) * 100);
@@ -1405,7 +1447,7 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
         logs: reportLogs
       });
 
-      showToast(`⚡ Autofill simulation complete: ${filledCount} of 14 fields successfully matched.`);
+      showToast(`⚡ Autofill simulation complete: ${filledCount} of 16 fields successfully matched.`);
 
       const logEntry: ActivityLogItem = {
         id: "log-" + Math.random().toString(36).substr(2, 9),
@@ -1434,6 +1476,8 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
       bio: '',
       favoriteColor: '',
       gender: '',
+      branch: '',
+      semester: '',
       scholarshipCategory: '',
       uploadedDocumentName: '',
       uploadedDocumentSize: '',
@@ -4771,6 +4815,95 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
                           </div>
                         </div>
 
+                        {/* Question 11 B: Course / Branch (Radio Buttons - Choice Option) */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.branch ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-2">
+                            Course / Branch <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          
+                          <div className="space-y-2.5">
+                            {[
+                              { key: "MBA", labelEn: "MBA", labelHi: "एमबीए" },
+                              { key: "MCA", labelEn: "MCA", labelHi: "एमसीए" },
+                              { key: "IT", labelEn: "IT", labelHi: "आईटी" },
+                              { key: "AI/ML", labelEn: "AI/ML", labelHi: "एआई/एमएल" },
+                              { key: "BBA", labelEn: "BBA", labelHi: "बीबीए" }
+                            ].map((opt) => {
+                              const translatedLabel = language === 'hi' ? opt.labelHi : opt.labelEn;
+                              const isSelected = playgroundForm.branch === opt.labelEn || playgroundForm.branch === opt.labelHi || playgroundForm.branch === opt.key;
+                              return (
+                                <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer select-none group">
+                                  <input
+                                    type="radio"
+                                    name="playground_branch"
+                                    checked={isSelected}
+                                    onChange={() => setPlaygroundForm({ ...playgroundForm, branch: translatedLabel })}
+                                    className="w-4 h-4 text-[#4B2393] border-gray-300 focus:ring-[#4B2393]"
+                                  />
+                                  <span className={`text-xs font-semibold ${isSelected ? 'text-[#4B2393]' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                                    {translatedLabel}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-3.5 flex justify-between items-center text-[9.5px] border-t border-slate-100 pt-2 font-sans text-[#64748B]">
+                            <span className="italic font-medium">Tags: "branch", "course", "major", "specialization"</span>
+                            {playgroundForm.branch ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{playgroundForm.branch}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Question 11 C: Semester (Radio Buttons - Choice Option) */}
+                        <div className={`p-4 rounded-xl border transition-all ${playgroundForm.semester ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
+                          <label className="block text-xs font-bold text-[#202124] font-sans mb-2">
+                            Semester <span className="text-[#D93025] font-bold">*</span>
+                          </label>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              { key: "Semester-I", labelEn: "Semester-I", labelHi: "सेमेस्टर-I" },
+                              { key: "Semester-II", labelEn: "Semester-II", labelHi: "सेमेस्टर-II" },
+                              { key: "Semester-III", labelEn: "Semester-III", labelHi: "सेमेस्टर-III" },
+                              { key: "Semester-IV", labelEn: "Semester-IV", labelHi: "सेमेस्टर-IV" },
+                              { key: "Semester-V", labelEn: "Semester-V", labelHi: "सेमेस्टर-V" },
+                              { key: "Semester-VI", labelEn: "Semester-VI", labelHi: "सेमेस्टर-VI" },
+                              { key: "Semester-VII", labelEn: "Semester-VII", labelHi: "सेमेस्टर-VII" },
+                              { key: "Semester-VIII", labelEn: "Semester-VIII", labelHi: "सेमेस्टर-VIII" }
+                            ].map((opt) => {
+                              const translatedLabel = language === 'hi' ? opt.labelHi : opt.labelEn;
+                              const isSelected = playgroundForm.semester === opt.labelEn || playgroundForm.semester === opt.labelHi || playgroundForm.semester === opt.key;
+                              return (
+                                <label key={opt.key} className="flex items-center gap-2 cursor-pointer select-none group">
+                                  <input
+                                    type="radio"
+                                    name="playground_semester"
+                                    checked={isSelected}
+                                    onChange={() => setPlaygroundForm({ ...playgroundForm, semester: translatedLabel })}
+                                    className="w-4 h-4 text-[#4B2393] border-gray-300 focus:ring-[#4B2393]"
+                                  />
+                                  <span className={`text-xs font-semibold ${isSelected ? 'text-[#4B2393]' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                                    {translatedLabel}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-3.5 flex justify-between items-center text-[9.5px] border-t border-slate-100 pt-2 font-sans text-[#64748B]">
+                            <span className="italic font-medium">Tags: "semester", "term", "academic term"</span>
+                            {playgroundForm.semester ? (
+                              <span className="text-emerald-600 font-bold">✓ Live Populated: [{playgroundForm.semester}]</span>
+                            ) : (
+                              <span className="text-slate-400">Idle</span>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Question 12: Preferred Scholarship Category (Select Options - Select Option) */}
                         <div className={`p-4 rounded-xl border transition-all ${playgroundForm.scholarshipCategory ? 'bg-emerald-50/20 border-emerald-300 animate-fadeIn' : 'bg-white border-[#DADCE0]'} hover:border-[#4B2393]`}>
                           <label className="block text-xs font-bold text-[#202124] font-sans mb-1">
@@ -5043,26 +5176,41 @@ document.getElementById('fill-btn').addEventListener('click', async () => {
                       {/* Active Grid edit form */}
                       <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
                         {Object.entries(vaultProfile).map(([vKey, vVal]) => (
-                          <div key={vKey} className="group flex flex-col p-2.5 bg-slate-50 border border-slate-200 hover:border-[#10B981] rounded-xl text-xs transition-all">
-                            <div className="flex justify-between items-center mb-1">
+                          <div key={vKey} className="group flex flex-col p-3 bg-slate-50 border border-slate-200 hover:border-[#10B981] rounded-xl text-xs transition-all relative">
+                            <div className="flex justify-between items-center mb-1.5">
                               <span className="font-extrabold text-[#475569] uppercase text-[10px] tracking-wider font-mono">
                                 {vKey.replace(/_/g, " ")}
                               </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[9px] text-[#10B981] font-bold bg-emerald-50 px-1 py-0.5 rounded">✓ Loaded</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveField(vKey)}
+                                  className="opacity-0 group-hover:opacity-100 text-[10px] text-red-500 hover:text-red-700 transition-opacity p-0.5 font-bold cursor-pointer"
+                                  title="Delete attribute securely"
+                                >
+                                  ✕ Delete
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <input
+                                type="text"
+                                value={vVal}
+                                onChange={(e) => setVaultProfile({ ...vaultProfile, [vKey]: e.target.value })}
+                                className="flex-1 bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs font-semibold text-slate-805 focus:border-emerald-500 outline-none transition-all"
+                              />
                               <button
                                 type="button"
-                                onClick={() => handleRemoveField(vKey)}
-                                className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 transition-opacity p-0.5 font-bold"
-                                title="Delete attribute securely"
+                                onClick={() => {
+                                  showToast(`🔒 ${vKey.replace(/_/g, ' ').toUpperCase()} updated & live synced!`);
+                                  document.dispatchEvent(new CustomEvent('securefill_data_sync_trigger'));
+                                }}
+                                className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold px-3 py-1 rounded-lg text-[10px] transition-all cursor-pointer whitespace-nowrap"
                               >
-                                ✕ Delete
+                                Update
                               </button>
                             </div>
-                            <input
-                              type="text"
-                              value={vVal}
-                              onChange={(e) => setVaultProfile({ ...vaultProfile, [vKey]: e.target.value })}
-                              className="w-full bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs font-semibold text-slate-800 focus:border-emerald-500 outline-none transition-all"
-                            />
                           </div>
                         ))}
                       </div>
